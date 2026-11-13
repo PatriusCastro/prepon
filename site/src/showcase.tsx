@@ -71,7 +71,8 @@ export function Session() {
 
   return (
     <div className="session" ref={ref}>
-      <p className="session-label" id="session-label">
+      {/* Kept for screen readers (it names the transcript region); sighted users get the "Simulation" badge in the bar. */}
+      <p className="visually-hidden" id="session-label">
         Simulated session: the skill’s real commands, with the project and output shortened.
       </p>
       <div className="term">
@@ -146,14 +147,38 @@ function detect(text: string): Finding[] {
 }
 
 const FIRST = 5;
+type Group = { rule: string; suggestion: string; lines: number[]; matches: string[]; count: number };
 
 export function SlopToy() {
   const [code, setCode] = useState(SLOP_SAMPLE);
   const [all, setAll] = useState(false);
+  const [active, setActive] = useState(0);
   const list = useRef<HTMLOListElement>(null);
+  const area = useRef<HTMLTextAreaElement>(null);
+  const mirror = useRef<HTMLPreElement>(null);
   const findings = detect(code);
-  const visible = all ? findings : findings.slice(0, FIRST);
+  // One entry per rule, in order of its first line (findings are already sorted by line).
+  const groups = [...findings.reduce((m, f) => {
+    const g = m.get(f.rule) ?? { rule: f.rule, suggestion: f.suggestion, lines: [], matches: [], count: 0 };
+    g.count++;
+    if (!g.lines.includes(f.line)) g.lines.push(f.line);
+    if (!g.matches.includes(f.match)) g.matches.push(f.match);
+    return m.set(f.rule, g);
+  }, new Map<string, Group>()).values()];
+  const flagged = new Set(findings.map((f) => f.line));
+  const lines = code.split('\n');
+  const visible = all ? groups : groups.slice(0, FIRST);
   const preset = code === SLOP_SAMPLE ? 'slop' : code === FITTED_SAMPLE ? 'fitted' : null;
+  const load = (c: string) => { setCode(c); setActive(0); };
+
+  // Select the line in the editor so the finding and the code it's about are seen together.
+  const goTo = (line: number) => {
+    const start = lines.slice(0, line - 1).reduce((n, l) => n + l.length + 1, 0);
+    area.current?.focus({ preventScroll: true });
+    area.current?.setSelectionRange(start, start + lines[line - 1].length);
+    mirror.current?.children[line - 1]?.scrollIntoView({ block: 'nearest', behavior: reduceQ.matches ? 'auto' : 'smooth' });
+    setActive(line);
+  };
 
   if (!RULES.length) return <p className="toy-error">The detector rules didn’t load, so the live scan is off. The rules are listed on the <Link to="/docs/slop-patterns">slop patterns</Link> page.</p>;
 
@@ -161,31 +186,48 @@ export function SlopToy() {
     <div className="toy">
       <div className="toy-input">
         <div className="segmented" role="group" aria-label="Sample code">
-          <button type="button" aria-pressed={preset === 'slop'} onClick={() => setCode(SLOP_SAMPLE)}>Generic hero</button>
-          <button type="button" aria-pressed={preset === 'fitted'} onClick={() => setCode(FITTED_SAMPLE)}>Fitted version</button>
+          <button type="button" aria-pressed={preset === 'slop'} onClick={() => load(SLOP_SAMPLE)}>Generic hero</button>
+          <button type="button" aria-pressed={preset === 'fitted'} onClick={() => load(FITTED_SAMPLE)}>Fitted version</button>
         </div>
         <label htmlFor="toy-code" className="toy-label">Code to scan <span>(edit it, or paste your own JSX or CSS)</span></label>
-        <textarea id="toy-code" className="toy-code" value={code} onChange={(e) => setCode(e.target.value)}
-          spellCheck={false} autoCapitalize="off" autoCorrect="off" wrap="off" rows={Math.min(18, code.split('\n').length + 1)} />
+        {/* A mirror behind a transparent textarea draws line numbers and flagged-line highlights. Both share one
+            grid cell and the same type and padding, so they wrap identically; the editor scrolls as one. */}
+        <div className="toy-editor">
+          <pre className="toy-mirror" ref={mirror} aria-hidden="true">
+            {lines.map((l, n) => (
+              <div key={n} className={active === n + 1 ? 'is-flagged is-active' : flagged.has(n + 1) ? 'is-flagged' : undefined}>{l || ' '}</div>
+            ))}
+          </pre>
+          <textarea id="toy-code" className="toy-code" ref={area} value={code} onChange={(e) => { setCode(e.target.value); setActive(0); }}
+            spellCheck={false} autoCapitalize="off" autoCorrect="off" />
+        </div>
       </div>
       <div className="toy-output">
         <p className="toy-count" role="status">
-          <strong>{findings.length}</strong>{findings.length === 1 ? 'tell' : 'tells'} found by the detector’s {RULES.length} rules
+          <strong>{findings.length}</strong>{findings.length === 1 ? 'tell' : 'tells'} from {groups.length} of the detector’s {RULES.length} rules
         </p>
         {findings.length ? (
           <>
             <ol className="toy-findings" ref={list} tabIndex={-1} aria-label="Findings">
-              {visible.map((f) => (
-                <li key={`${f.rule}:${f.line}:${f.match}`}>
-                  <p className="toy-head"><code>{f.rule}</code> <span className="toy-line">line {f.line}</span></p>
-                  <p>{f.suggestion}</p>
+              {visible.map((g) => (
+                <li key={g.rule}>
+                  <p className="toy-head">
+                    <code>{g.rule}</code>{g.count > 1 && <span className="toy-times">×{g.count}</span>}
+                    {g.lines.map((l) => (
+                      <button key={l} type="button" className="toy-line" aria-pressed={active === l} onClick={() => goTo(l)}>
+                        <span className="visually-hidden">Select </span>line {l}<span className="visually-hidden"> in the code</span>
+                      </button>
+                    ))}
+                  </p>
+                  <p className="toy-match">{g.matches.map((m) => <code key={m}>{m}</code>)}</p>
+                  <p>{g.suggestion}</p>
                 </li>
               ))}
             </ol>
-            {findings.length > FIRST && (
+            {groups.length > FIRST && (
               <button type="button" className="btn btn-quiet toy-more" aria-expanded={all}
                 onClick={() => { setAll(!all); if (all) list.current?.focus(); }}>
-                {all ? 'Show fewer' : `Show all ${findings.length}`}
+                {all ? 'Show fewer' : `Show all ${groups.length} rules`}
               </button>
             )}
           </>

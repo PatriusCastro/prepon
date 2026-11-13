@@ -57,6 +57,35 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Dark theme: the same teal-tinted neutrals, darkened; dagat teal lightens so it stays the one action color, and
+   araw gold stays as it is (decoration only). Contrast (WCAG formula): ink 13.9 on surface, muted 7.8 on surface /
+   8.7 on bg / 6.8 on sunk / 6.1 on brand-tint, line-strong 4.7 on surface / 5.2 on bg, brand 8.8 on surface /
+   6.9 on brand-tint, on-brand 8.2 on brand / 8.8 on ok, crit 8.2 / 7.8 on crit-bg, ok 9.5 / 8.2 on ok-bg, warn 8.6 on warn-bg. */
+@media (prefers-color-scheme: dark) {
+  .permit {
+    --p-bg: #0f1615;
+    --p-surface: #172120;
+    --p-sunk: #212c2a;
+    --p-ink: #e5eeec;
+    --p-muted: #a6b6b2;
+    --p-line: #2b3836;
+    --p-line-strong: #7b8d89;
+    --p-brand: #7cccc2;
+    --p-brand-strong: #a2ddd5;
+    --p-brand-tint: #163733;
+    --p-brand-soft: #24504a;
+    --p-on-brand: #062a26;
+    --p-crit: #ff9d92; --p-crit-bg: #3b1916;
+    --p-ok: #82d6a2;   --p-ok-bg: #15301f;
+    --p-warn: #f2bd60; --p-warn-bg: #33260e;
+    --p-shadow-rest: 0 1px 2px rgb(0 0 0 / 0.3);
+    --p-shadow-bar: 0 -4px 16px rgb(0 0 0 / 0.5);
+    color-scheme: dark;
+  }
+  /* The demo bar is dark in both themes; keep its light text. */
+  .permit .p-demobar { --p-on-brand: #ffffff; }
+}
+
 /* Keep focused fields clear of the pinned Continue bar on phones (WCAG 2.4.11). */
 html:has(.permit) { scroll-padding-block: var(--p-4) 9rem; }
 

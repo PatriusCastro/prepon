@@ -73,10 +73,10 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Dark theme for the dashboard only: the same warm, moor-tinted neutrals, darkened; the brand green lightens so it
+/* Dark theme for the sign-in and the dashboard: the same warm, moor-tinted neutrals, darkened; the brand green lightens so it
    still reads as the one action color. Shadows go darker because borders now carry most of the depth. */
 @media (prefers-color-scheme: dark) {
-  .fleet.f-app {
+  .fleet {
     --f-bg: #121614;
     --f-surface: #1b201d;
     --f-sunk: #252b27;
@@ -102,7 +102,7 @@
     color-scheme: dark;
   }
   /* The demo bar is already dark in both themes; keep its light text. */
-  .fleet.f-app .f-demobar { --f-on-brand: #f3f2ee; }
+  .fleet .f-demobar { --f-on-brand: #f3f2ee; }
 }
 
 /* Reset the site's element styles inside the demo. */

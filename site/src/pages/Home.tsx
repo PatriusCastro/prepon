@@ -1,5 +1,5 @@
-import type { CSSProperties } from 'react';
-import { Eye, PencilLine, ArrowRight } from 'lucide-react';
+import { useEffect, useState, type CSSProperties } from 'react';
+import { Eye, PencilLine, ArrowRight, Pause, Play } from 'lucide-react';
 import { Link } from '../router';
 import { CodeBlock } from '../ui';
 import { Session, SlopToy, Compare } from '../showcase';
@@ -23,20 +23,62 @@ const MODES = [
 
 const i = (n: number) => ({ '--i': n }) as CSSProperties;
 
+// Hero backdrop chips: real detector rules (struck through, since Prepon removes them) and the six modes.
+// [label, is a slop rule, x %, y %, loop seconds]. Six, in the bands above and below the text, so the hero stays calm.
+const DRIFT: [string, boolean, number, number, number][] = [
+  ['card-spam', true, 10, 5, 14], ['build', false, 48, 4, 17], ['audit', false, 86, 6, 19],
+  ['glow-halo', true, 10, 93, 15], ['fix', false, 40, 95, 13], ['blur-blob', true, 66, 93, 16],
+];
+
+function HeroBackdrop() {
+  const [paused, setPaused] = useState(false);
+  return (
+    <>
+      <div className={paused ? 'hero-bg is-paused' : 'hero-bg'} aria-hidden="true">
+        {DRIFT.map(([label, slop, x, y, d], n) => (
+          <span key={label} className={slop ? 'drift is-slop' : 'drift'}
+            style={{ '--x': `${x}%`, '--y': `${y}%`, '--d': `${d}s`, '--n': n } as CSSProperties}>{label}</span>
+        ))}
+      </div>
+      {/* WCAG 2.2.2: the backdrop loops for more than 5 s, so it gets a pause. */}
+      <button type="button" className="btn btn-quiet hero-pause" aria-pressed={paused} onClick={() => setPaused(!paused)}>
+        {paused ? <Play aria-hidden size={16} /> : <Pause aria-hidden size={16} />}Pause background
+      </button>
+    </>
+  );
+}
+
+// Scroll reveal: each block below the hero rises in once, the first time it enters the viewport, then stays.
+// CSS only hides it while .reveal is on and .is-in isn't, and never under reduced motion.
+function useReveal() {
+  useEffect(() => {
+    const els = [...document.querySelectorAll<HTMLElement>('.section .wrap > *')];
+    // Revealing a block also reveals every block before it, so jumping down the page (End key, a link) leaves no gaps.
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      els.slice(0, els.indexOf(e.target as HTMLElement) + 1).forEach((el) => { el.classList.add('is-in'); io.unobserve(el); });
+    }), { rootMargin: '0px 0px -10% 0px' });
+    els.forEach((el) => { el.classList.add('reveal'); io.observe(el); });
+    return () => io.disconnect();
+  }, []);
+}
+
 export function Home() {
+  useReveal();
   return (
     <>
       <section className="hero" aria-labelledby="intro-h">
+        <HeroBackdrop />
         <div className="wrap hero-grid">
           <div className="hero-copy">
             <div className="hero-copy rise" style={i(0)}>
               <p className="hero-gloss"><span lang="grc">πρέπον</span> · Greek rhetoric: what is fitting</p>
               <h1 id="intro-h" tabIndex={-1}>Interface design that fits the project it’s in</h1>
-              <p className="lede">A Claude Code skill for government portals, banking apps, operations dashboards, and form-heavy workflows. It reads your codebase before it designs anything, names the principle behind each decision, and flags the generic look AI-generated interfaces share.</p>
+              <p className="lede">A Claude Code skill for portals, banking apps, dashboards, and form-heavy workflows. It reads your codebase first, explains every decision, and flags the generic AI look.</p>
             </div>
             <div className="hero-install rise" style={i(1)}>
               <CodeBlock label="Install" code={INSTALL} primary />
-              <p className="small">Then type <code>/prepon:prepon</code> and a request, or just ask for UI work. <a href="#install-h">Requirements and a one-session trial</a></p>
+              <p className="small">Then run <code>/prepon:prepon</code> with a request.</p>
             </div>
           </div>
           <div className="rise" style={i(2)}><Session /></div>

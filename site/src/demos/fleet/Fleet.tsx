@@ -137,6 +137,15 @@ const TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World
 // Same basemap in dark grey for the dashboard's dark theme (checked: keyless, no labels, no watermark).
 const TILES_DARK = TILES.replace('Light_Gray', 'Dark_Gray');
 const DARK = '(prefers-color-scheme: dark)';
+
+// Both maps follow the system theme: add the basemap and swap it when the theme changes. Returns the cleanup.
+function themedTiles(map: L.Map) {
+  const dark = matchMedia(DARK);
+  const tiles = L.tileLayer(dark.matches ? TILES_DARK : TILES, { attribution: ATTRIBUTION, maxZoom: 16 }).addTo(map);
+  const theme = () => tiles.setUrl(dark.matches ? TILES_DARK : TILES);
+  dark.addEventListener('change', theme);
+  return () => dark.removeEventListener('change', theme);
+}
 const ATTRIBUTION = 'Tiles &copy; <a href="https://www.esri.com">Esri</a>, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 // Labels south of the depot sit below their point, so they don't collide with vehicles heading out to them.
@@ -157,7 +166,7 @@ function LoginMap() {
       keyboard: false, zoomAnimation: false, fadeAnimation: !still, zoomSnap: 0.25, maxZoom: 16,
     });
     map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
-    L.tileLayer(TILES, { attribution: ATTRIBUTION, maxZoom: 16 }).addTo(map);
+    const untheme = themedTiles(map);
     map.getPane('markerPane')?.setAttribute('aria-hidden', 'true'); // the caption names the depot
     const pin = (at: LatLng, html: string | HTMLElement, z = 0) =>
       L.marker(at, { icon: L.divIcon({ html, className: 'f-mk', iconSize: undefined }), keyboard: false, interactive: false, zIndexOffset: z }).addTo(map);
@@ -168,7 +177,7 @@ function LoginMap() {
     const fit = () => { map.invalidateSize(); map.fitBounds(bounds, { paddingTopLeft: [64, 64], paddingBottomRight: [64, 160] }); };
     const ro = new ResizeObserver(fit);
     ro.observe(box.current!);
-    return () => { ro.disconnect(); map.remove(); };
+    return () => { ro.disconnect(); untheme(); map.remove(); };
   }, [depot]);
   return (
     <figure className="f-login-map">
@@ -405,11 +414,7 @@ function FleetMap({ vehicles, acks, selected, onOpen }: {
     // Zoom sits bottom right, under the thumb on tablets and out of the way of the legend.
     L.control.zoom({ position: 'bottomright' }).addTo(map);
     map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
-    // The dashboard follows the system theme (the sign-in stays light), so the basemap swaps with it.
-    const dark = matchMedia(DARK);
-    const tiles = L.tileLayer(dark.matches ? TILES_DARK : TILES, { attribution: ATTRIBUTION, maxZoom: 16 }).addTo(map);
-    const theme = () => tiles.setUrl(dark.matches ? TILES_DARK : TILES);
-    dark.addEventListener('change', theme);
+    const untheme = themedTiles(map);
     map.getPane('markerPane')?.setAttribute('aria-hidden', 'true'); // the summary paragraph and the lists carry this
     const pin = (key: string, at: LatLng, z: number, title?: string, open?: () => void) => {
       const m = L.marker(at, { icon: L.divIcon({ html: slot(key), className: 'f-mk', iconSize: undefined }), keyboard: false,
@@ -425,7 +430,7 @@ function FleetMap({ vehicles, acks, selected, onOpen }: {
     // The pane resizes with the window and the layout; Leaflet only watches the window.
     const ro = new ResizeObserver(() => map.invalidateSize());
     ro.observe(box.current!);
-    return () => { ro.disconnect(); dark.removeEventListener('change', theme); map.remove(); mapRef.current = null; };
+    return () => { ro.disconnect(); untheme(); map.remove(); mapRef.current = null; };
     // Vehicles are a fixed set while this map is mounted; acks and selection only change marker content, which the portals handle.
   }, []);
 

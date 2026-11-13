@@ -246,9 +246,38 @@ html:has(.site) { scroll-padding-top: var(--s-4); -webkit-text-size-adjust: 100%
 .hero-copy > .hero-install { margin-top: var(--s-6); max-width: 34rem; }
 .hero-install > * + * { margin-top: var(--s-3); }
 
+/* Hero backdrop: the page's one place of atmosphere (motion.md, marketing pages). A slow ochre drift, plus chips of
+   real detector rules (struck through) and the six modes floating in the margins. Transform/opacity/background-position
+   only, no blur. Chips show once the hero is two columns (64rem); stacked, they would sit behind the text. */
+.hero { position: relative; isolation: isolate; overflow: hidden; }
+.hero-bg {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(115deg, transparent 20%, rgb(154 52 18 / 0.12) 45%, transparent 60%, rgb(154 52 18 / 0.09) 80%, transparent) 0 0 / 300% 100%;
+  animation: hero-drift 12s ease-in-out infinite alternate;
+}
+@keyframes hero-drift { to { background-position: 100% 0; } }
+.drift {
+  display: none; position: absolute; left: var(--x); top: var(--y); translate: -50% -50%;
+  padding: 0.125rem var(--s-2); border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--surface);
+  font: var(--t-sm)/1.4 var(--mono); color: var(--muted); white-space: nowrap; opacity: 0.7;
+  animation: float calc(var(--d) * 0.5) ease-in-out calc(var(--n) * -1.3s) infinite alternate;
+}
+.drift.is-slop { text-decoration: line-through; text-decoration-color: var(--accent); opacity: 0.55; }
+@keyframes float { from { transform: translate(-12px, -18px) rotate(-5deg); } to { transform: translate(12px, 18px) rotate(5deg); } }
+.hero-bg.is-paused, .hero-bg.is-paused .drift { animation-play-state: paused; }
+.hero-pause { position: absolute; right: var(--s-2); bottom: var(--s-2); font-size: var(--t-sm); }
+.hero-pause[aria-pressed='true'] { color: var(--ink); }
+
 /* One entrance on load: three groups rise 8px and fade in, 40ms apart, done by ~330ms. */
 .rise { animation: rise 250ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms); }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+
+/* Scroll reveal (Home's useReveal): once per block, then it stays. Hidden only when motion is welcome. */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal:not(.is-in) { opacity: 0; transform: translateY(24px); }
+  .reveal.is-in { transition: opacity 350ms var(--ease-out), transform 350ms var(--ease-out); }
+  .reveal.is-in + .reveal.is-in { transition-delay: 80ms; }
+}
 
 /* Modes: comparable records, so plain rows. */
 .modes { list-style: none; padding: 0; border-bottom: 1px solid var(--line); }
@@ -264,7 +293,6 @@ html:has(.site) { scroll-padding-top: var(--s-4); -webkit-text-size-adjust: 100%
 .mode-example code { color: var(--ink); }
 
 /* Simulated session */
-.session-label { font-size: var(--t-sm); color: var(--muted); margin-bottom: var(--s-2); }
 .term {
   background: var(--code-bg); color: var(--code-ink); border-radius: var(--radius-panel);
   overflow: hidden; font: var(--t-sm)/1.55 var(--mono);
@@ -305,19 +333,54 @@ html:has(.site) { scroll-padding-top: var(--s-4); -webkit-text-size-adjust: 100%
 .toy { display: grid; gap: var(--s-5); align-items: start; }
 .toy-label { display: block; margin: var(--s-4) 0 var(--s-2); font-size: var(--t-sm); font-weight: 500; }
 .toy-label span { font-weight: 400; color: var(--muted); }
-.toy-code {
-  display: block; width: 100%; padding: var(--s-3) var(--s-4); resize: vertical; white-space: pre; overflow: auto; tab-size: 2;
-  font: var(--t-sm)/1.6 var(--mono);
-  background: var(--code-bg); color: var(--code-ink); border: 1px solid var(--line-strong); border-radius: var(--radius-panel);
+/* Editor: mirror (line numbers, highlights) and textarea stacked in one grid cell, wrapping identically. */
+.toy-editor {
+  display: grid; max-height: 30rem; overflow-y: auto; overscroll-behavior: contain; counter-reset: ln;
+  background: var(--code-bg); border: 1px solid var(--line-strong); border-radius: var(--radius-panel);
+  scrollbar-width: thin; scrollbar-color: var(--code-dim) transparent;
 }
+.toy-editor > * {
+  grid-area: 1 / 1; margin: 0; padding: var(--s-3) var(--s-4) var(--s-3) 3.25rem; border: 0;
+  font: var(--t-sm)/1.6 var(--mono); letter-spacing: 0; tab-size: 2; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.toy-mirror div {
+  position: relative; counter-increment: ln; color: transparent;
+  /* Bleed the highlight to both edges without changing the wrap width. */
+  margin-inline: -3.25rem calc(-1 * var(--s-4)); padding-inline: 3.25rem var(--s-4);
+  transition: background-color var(--motion-base);
+}
+.toy-mirror div::before {
+  content: counter(ln); position: absolute; left: 0; width: 2.25rem; text-align: right;
+  color: var(--code-dim); opacity: 0.6; font-variant-numeric: tabular-nums;
+}
+.toy-mirror .is-flagged { background: rgb(240 162 122 / 0.12); }
+.toy-mirror .is-flagged::before { color: var(--code-accent); opacity: 1; }
+.toy-mirror .is-active { background: rgb(240 162 122 / 0.28); }
+.toy-code {
+  display: block; width: 100%; overflow: hidden; resize: none;
+  background: transparent; color: var(--code-ink); caret-color: var(--code-accent);
+}
+.toy-code::selection { background: rgb(240 162 122 / 0.4); color: var(--code-ink); }
+.toy-code:focus-visible { outline: 2px solid var(--code-accent); outline-offset: -2px; border-radius: var(--radius-panel); }
 .toy-count { font-size: var(--t-sm); color: var(--muted); }
 .toy-count strong { font-size: var(--t-xl); font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; margin-right: var(--s-1); }
 .toy-findings { list-style: none; padding: 0; margin-top: var(--s-3); border-top: 1px solid var(--line); font-size: var(--t-sm); line-height: 1.5; }
 .site .toy-findings li { margin: 0; padding-block: var(--s-3); border-bottom: 1px solid var(--line); animation: fade var(--motion-base) var(--ease-out) both; }
 .toy-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2); }
 .toy-head code { font-weight: 600; color: var(--ink); }
-.toy-line { color: var(--muted); font-variant-numeric: tabular-nums; }
-.toy-findings li p + p { margin-top: var(--s-1); color: var(--muted); }
+.toy-times { color: var(--muted); font-variant-numeric: tabular-nums; }
+/* Line chips select that line in the editor. 32px tall, with the row's spacing keeping neighbours apart. */
+.toy-line {
+  display: inline-flex; align-items: center; min-height: 2rem; padding-inline: var(--s-2);
+  font: 500 var(--t-sm)/1 var(--sans); font-variant-numeric: tabular-nums; color: var(--accent); cursor: pointer;
+  background: transparent; border: 1px solid var(--line-strong); border-radius: var(--radius-pill);
+  transition: background-color var(--motion-fast), color var(--motion-fast);
+}
+.toy-line:hover { background: var(--sunk); color: var(--accent-hover); }
+.toy-line[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.toy-match { display: flex; flex-wrap: wrap; gap: var(--s-1); }
+.toy-match code { padding: 0 var(--s-1); border-radius: var(--radius); background: var(--sunk); color: var(--ink); }
+.toy-findings li p + p { margin-top: var(--s-2); color: var(--muted); }
 .toy-more { margin-top: var(--s-3); }
 .toy-clean, .toy-error { margin-top: var(--s-3); padding: var(--s-4); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-panel); font-size: var(--t-sm); }
 
@@ -478,15 +541,16 @@ html:has(.site) { scroll-padding-top: var(--s-4); -webkit-text-size-adjust: 100%
 
 @media (min-width: 64rem) {
   .hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-8); align-items: start; }
+  .drift { display: block; }
   .toy { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-7); }
   .docs { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: var(--s-8); }
   .docs-side { display: block; position: sticky; top: var(--s-5); align-self: start; max-height: calc(100vh - 3rem); overflow-y: auto; margin-left: calc(-1 * var(--s-3)); }
   .docs-toc { display: none; }
   .demo-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
-
 @media (prefers-reduced-motion: reduce) {
-  .rise, .term-line.is-in, .site .toy-findings li { animation: none; }
+  .rise, .term-line.is-in, .site .toy-findings li, .hero-bg, .drift { animation: none; }
+  .hero-pause { display: none; }
   .term-progress span, .more-link svg, .site .demo-link svg { transition: none; }
   .btn:active, .more-link a:hover svg, .site .demo-item:hover .demo-link svg { transform: none; }
 }

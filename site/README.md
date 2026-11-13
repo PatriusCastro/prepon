@@ -36,6 +36,8 @@ Six sections, each with one job: what it is and how to install it (with the simu
 | Hero entrance | Nothing beyond arrival; the only page-load motion | 3 groups, opacity + 8 px rise, 250 ms, 40 ms stagger (done by ~330 ms), once | None; content is simply there | n/a (under 5 s) |
 | Simulated Claude Code session | How a build run triggers the skill, runs its scripts, fixes a finding, and reports | Starts once at 40% visible; ~14 s; typing 24 ms/char; lines fade in 220 ms; progress bar | Opens on the final frame with Replay; replay shows lines without typing or movement | Pause / Resume / Replay / Show the whole run |
 | Detector findings | A new finding appearing as you edit | 220 ms fade, only on newly added findings | None | Runs only on input |
+| Hero backdrop (the page's one place of atmosphere) | What Prepon removes and what it does: real detector rules floating struck through, beside the six modes, over a faint ochre drift | Gradient 12 s alternate; six chips in the bands above and below the text float ±12/±18 px, ±5° over 6.5–10 s; chips only at 64rem+ so they never sit behind text | Static: gradient and chips hold still, pause button hidden | "Pause background" button (aria-pressed) |
+| Scroll reveal | Each block below the hero arriving | Once per block on entering the viewport: opacity + 24 px rise, 350 ms, 80 ms between siblings; revealing one reveals all above it | None; everything is visible from the start | n/a (once, under 5 s) |
 | Before/after slider | Real captures, before vs after | Direct manipulation, no animation | Same | n/a |
 | Press and hover feedback | Buttons, nav, cards, arrow nudge | 100–150 ms, transform/colour only | Transforms removed | n/a |
 
