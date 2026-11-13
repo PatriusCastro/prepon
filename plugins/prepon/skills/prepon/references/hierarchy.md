@@ -46,14 +46,16 @@ Your intended hierarchy and what the screen actually does can differ, so check a
 node <scripts>/tap-map.js --base http://localhost:5173 --routes login,dashboard --primary "button[type=submit]"
 ```
 
-It writes two images per route at 360×800 into `.prepon/snapshots/<stamp>/tapmap/`, and prints JSON:
+It writes three images per route at 360×800 into `.prepon/snapshots/<stamp>/tapmap/`, and prints JSON:
 
 - **`-blur` image, the squint test.** The page blurred so text can't be read. The first one to three shapes that stand out are what users notice first. They should be your tier 1. If a header band, an illustration, a decorative chart, or a secondary button wins instead, it's stealing attention: demote it.
+- **`-attention` image, the predicted first looks.** The top five things on the first screen, numbered in the order users are likely to look at them, with the primary action in purple. The order is scored from size (font size for text, area for fills and images), contrast with what's behind, position (top and left first), and a colour few other things share. It's a prediction to compare against your tiers, not eye-tracking. It knows nothing about faces or meaning, and it can underrate a small, saturated button. Read it next to the blurred image, and when the project has real click or scroll heatmaps (PostHog, Clarity, Hotjar, GA), those win.
 - **`-taps` image, the tap map.** Every tappable target on the first screen is boxed by thumb zone: green is easy, amber is a stretch, red is hard, and purple means too small. The primary action has a ★.
-- **JSON:** each target's zone, size, gap to its neighbor, and whether it's on the first screen. Then first-screen totals (number of targets, words, distinct font sizes), how many screens tall the page is, and issues:
+- **JSON:** each target's zone, size, gap to its neighbor, and whether it's on the first screen. `attention` lists the top eight of the predicted order with scores, and `primaryRank` gives where the primary action falls. Then first-screen totals (number of targets, words, distinct font sizes), how many screens tall the page is, and issues:
   - `small-target`: under 44 px, or under 24 px, which fails WCAG
   - `crowded`: a small target less than 8 px from another
   - `primary-below-fold` or `primary-hard-to-reach`
+  - `primary-not-salient`: the primary action isn't among the first three predicted looks; the issue names what comes first instead
   - `busy-first-screen`: more than 12 targets
   - `no-action-on-first-screen`
   - `page-did-not-render`

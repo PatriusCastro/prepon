@@ -43,3 +43,23 @@ test('repeated primary judged by best match; overflow flagged', () => {
   assert.ok(!types.includes('primary-below-fold'));
   assert.ok(types.includes('page-wider-than-viewport'));
 });
+
+test('attention: big heading and an isolated coloured button beat small grey text; buried primary is flagged', () => {
+  const c = (kind, label, x, y, w, h, extra = {}) => ({ kind, label, x, y, w, h, contrast: 12, color: [30, 30, 30], font: 16, weight: 400, primary: false, ...extra });
+  const cands = [
+    c('text', 'Small print', 16, 700, 200, 16, { font: 12, contrast: 4.6 }),
+    c('text', 'Sign in to dispatch', 16, 120, 320, 40, { font: 32, weight: 600 }),
+    c('shape', 'Sign in', 16, 420, 328, 48, { font: 16, weight: 600, color: [31, 74, 61], contrast: 9 }),
+    c('text', 'Body copy', 16, 200, 328, 60, { font: 16 }),
+  ];
+  const ranked = require('../plugins/prepon/skills/prepon/scripts/tap-map.js').attention(cands, 360, 800);
+  assert.strictEqual(ranked[0].label, 'Sign in to dispatch');
+  assert.strictEqual(ranked.at(-1).label, 'Small print');
+
+  const { attentionReport } = require('../plugins/prepon/skills/prepon/scripts/tap-map.js');
+  const buried = [...cands, c('text', 'Continue', 16, 760, 80, 14, { font: 12, contrast: 3, primary: true })];
+  const r = attentionReport(buried, 360, 800, '.continue');
+  assert.ok(r.issues.some((i) => i.type === 'primary-not-salient'));
+  assert.ok(r.attention.length <= 8);
+  assert.ok(!attentionReport(cands, 360, 800, null).issues.length);
+});

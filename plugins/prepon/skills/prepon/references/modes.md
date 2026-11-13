@@ -24,9 +24,10 @@ Reviews existing UI and writes a report. It never edits source code. An audit pe
    - `node <scripts>/tap-map.js --base <url> --routes <target routes> --primary "<selector>"` when a dev server is available. Read the blurred and tap-map images as described in hierarchy.md.
    - `node <scripts>/scan-consistency.js --summary <source dir>` on the whole product the target belongs to, not just the target. If a repo holds several separate products (consistency.md), scan only the one the target belongs to. Consistency is relative to the rest of the product, so the norm comes from everywhere and the findings are what departs from it inside the target.
 4. **Look at it if you can.** If a dev server and Playwright are available, capture the target with `snapshot.js --phase audit` (see before-after.md) and review the images too. Many layout and hierarchy issues only show up visually. If you couldn't look, say the audit is code-only.
-5. **Review** against each area of the rubric below, the judgment tells in slop-patterns.md, and the behavior checklist in consistency.md: button states, action placement, forms, feedback, overlays, and wording, compared across the screens in scope.
-6. **Write the report** to `docs/ui-audit-YYYY-MM-DD.md` in the working project. Create `docs/` if it's missing, and add `-2`, `-3` and so on if a report for today already exists. Use the template below.
-7. **Reply** with the score summary, the critical findings, and the file path.
+5. **Count the steps** for the target's top three tasks, as described under Interaction cost in ux-laws.md. Each avoidable step is a usability finding.
+6. **Review** against each area of the rubric below, the judgment tells in slop-patterns.md, and the behavior checklist in consistency.md: button states, action placement, forms, feedback, overlays, and wording, compared across the screens in scope.
+7. **Write the report** to `docs/ui-audit-YYYY-MM-DD.md` in the working project. Create `docs/` if it's missing, and add `-2`, `-3` and so on if a report for today already exists. Use the template below.
+8. **Reply** with the score summary, the critical findings, and the file path.
 
 ### Severity
 
@@ -76,7 +77,15 @@ Date: YYYY-MM-DD · Project type: <type> · Platform: <web / React Native> · Me
 
 ## Hierarchy and tap map
 
-<For each screen: its job in one sentence, then a table of Element / Tier / Draws attention now? / Thumb zone / Fix, from the blurred and tap-map captures. Paths to the images. Mark it code-only if nothing was captured.>
+<For each screen: its job in one sentence, then a table of Element / Tier / Predicted look order / Thumb zone / Fix, from the blurred, attention, and tap-map captures. Say the look order is predicted, or name the analytics it came from. Paths to the images. Mark it code-only if nothing was captured.>
+
+## Task steps
+
+| Task | Count | Path | Avoidable | Fix |
+|---|---|---|---|---|
+| Approve an expense | 6 | open list → open claim → scroll → Approve → confirm → back | open claim, back: approve from the row | A4 |
+
+<The top three tasks for the target. Keep deliberate steps, such as a confirmation before an irreversible action, and say so.>
 
 ## Consistency
 

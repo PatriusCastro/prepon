@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- Interaction cost rule in `ux-laws.md`: count the steps on the top tasks and cut them, keeping protective steps. Audits now include a Task steps table, and build reports the main task's step count (before → after) and checks it in the self-review checklist.
+- Predicted attention order in `tap-map.js`: ranks what's on the first screen by likely first look (size, contrast, position, isolated colour), saves a numbered `-attention` image, reports `primaryRank`, and flags `primary-not-salient` when the primary action isn't in the first three. Labelled as a prediction; real analytics heatmaps win.
+
 ## [0.1.0] - 2026-11-12
 
 ### Added

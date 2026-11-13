@@ -2,12 +2,13 @@
 // Prepon tap map: predicts how a screen works for one-handed phone use. For each route, at a phone viewport,
 // it lists every tappable target with its thumb zone, size, spacing, and whether it's on the first screen,
 // saves an overlay screenshot (targets boxed by zone) and a blurred "squint test" screenshot, and flags issues.
+// It also predicts the attention order of the first screen (what users likely look at first) and saves it numbered.
 // Uses the PROJECT's own Playwright install (no dependencies here).
 //
 // Usage (from the project root):
 //   node tap-map.js --base http://localhost:5173 --routes login,dashboard [--primary "button[type=submit]"]
 //                   [--width 360] [--height 800] [--stamp s] [--storage-state auth.json] [--wait-for "main"]
-// Writes .prepon/snapshots/<stamp>/tapmap/<route>-taps@<w>.png, <route>-blur@<w>.png, and prints JSON.
+// Writes .prepon/snapshots/<stamp>/tapmap/<route>-taps@<w>.png, -blur@<w>.png, -attention@<w>.png, and prints JSON.
 //
 // This is a prediction from layout, not a measurement of real taps. If the project has analytics or
 // session recordings, those win.
@@ -107,6 +108,109 @@ function collectInPage({ selector, primary }) {
   return { targets, words, fontSizes: [...sizes].sort((a, b) => parseFloat(a) - parseFloat(b)), pageHeight: document.documentElement.scrollHeight, pageWidth: document.documentElement.scrollWidth };
 }
 
+// Runs in the page: the visual units on the first screen that can draw the eye. Text (by font size and weight),
+// media (img, svg, video, canvas), and filled shapes (buttons, banners, badges) whose fill stands out from what's behind
+// them. Text inside a filled shape merges into it, so a button counts once.
+function collectAttentionInPage({ primary }) {
+  const W = window.innerWidth, H = window.innerHeight;
+  const primaryEls = primary ? [...document.querySelectorAll(primary)] : [];
+  const rgb = (c) => { const m = c.match(/[\d.]+/g); return m ? m.map(Number) : [0, 0, 0, 0]; };
+  const lum = ([r, g, b]) => { const f = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+  const bgBehind = (el) => { for (let n = el; n; n = n.parentElement) { const c = rgb(getComputedStyle(n).backgroundColor); if ((c[3] ?? 1) > 0.5) return c; } return [255, 255, 255, 1]; };
+  const visible = (el, r) => {
+    if (r.width < 8 || r.height < 8 || r.bottom <= 0 || r.top >= H || r.right <= 0 || r.left >= W) return false;
+    const s = getComputedStyle(el);
+    return s.visibility !== 'hidden' && s.display !== 'none' && Number(s.opacity) > 0.1;
+  };
+  const isPrimary = (el) => primaryEls.some((p) => p === el || p.contains(el) || el.contains(p));
+  const box = (r) => ({ x: Math.round(r.left), y: Math.round(r.top), w: Math.round(Math.min(r.right, W) - Math.max(r.left, 0)), h: Math.round(Math.min(r.bottom, H) - Math.max(r.top, 0)) });
+  const out = [];
+  const fills = new Map();
+  for (const el of document.body.querySelectorAll('*')) {
+    const r = el.getBoundingClientRect();
+    if (!visible(el, r)) continue;
+    const tag = el.tagName.toLowerCase();
+    if (tag !== 'svg' && el.closest('svg')) continue; // an svg's parts belong to the svg
+    const s = getComputedStyle(el);
+    if (['img', 'svg', 'video', 'canvas', 'picture'].includes(tag) || s.backgroundImage.startsWith('url(')) {
+      if (Math.min(r.width, r.height) < 32) continue; // icons: they ride on their button or label
+      out.push({ kind: 'media', label: (el.getAttribute('alt') || el.getAttribute('aria-label') || tag).slice(0, 60), ...box(r), contrast: 3, color: null, font: 0, weight: 400, primary: isPrimary(el) });
+      continue;
+    }
+    const fill = rgb(s.backgroundColor);
+    if ((fill[3] ?? 1) > 0.5 && el.parentElement) {
+      const c = ratio(fill, bgBehind(el.parentElement));
+      // Covering most of the screen makes it a background, not a shape.
+      if (c >= 1.3 && r.width * r.height < W * H * 0.5) {
+        const f = { kind: 'shape', label: (el.getAttribute('aria-label') || '').slice(0, 60), tag, ...box(r), contrast: c, color: fill, font: 0, weight: 400, primary: isPrimary(el) };
+        fills.set(el, f); out.push(f);
+      }
+    }
+  }
+  for (const el of document.body.querySelectorAll('*')) {
+    if (![...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
+    const range = document.createRange(); range.selectNodeContents(el);
+    const r = range.getBoundingClientRect();
+    if (!visible(el, r)) continue;
+    const s = getComputedStyle(el);
+    const text = el.innerText.trim().replace(/\s+/g, ' ');
+    const font = parseFloat(s.fontSize), weight = Number(s.fontWeight) || 400, color = rgb(s.color);
+    let host = null;
+    for (let n = el; n && !host; n = n.parentElement) if (fills.has(n)) host = fills.get(n);
+    // Text inside a button, badge, or banner is that shape's label. Panels (a quarter of the screen or more) keep their text separate.
+    if (host && host.w * host.h < W * H * 0.25) {
+      if (!host.label) host.label = text.slice(0, 60);
+      host.font = Math.max(host.font, font); host.weight = Math.max(host.weight, weight);
+      continue;
+    }
+    out.push({ kind: 'text', label: text.slice(0, 60), ...box(r), contrast: ratio(color, bgBehind(el)), color, font, weight, primary: isPrimary(el) });
+  }
+  for (const f of fills.values()) if (!f.label) f.label = `<${f.tag}>`;
+  return out;
+}
+
+// ponytail: a hand-weighted salience model (size, contrast, top-left position, colour that stands out), not eye-tracking
+// and no face detection. Upgrade path: a trained saliency model, or the project's real heatmaps, which always win.
+function attention(cands, w, h) {
+  if (!cands.length) return [];
+  const maxFont = Math.max(...cands.map((c) => c.font || 0), 1);
+  // HSV saturation, so deep brand colours (dark teal, navy) count as colour; near-black doesn't.
+  const chroma = (c) => { if (!c) return 0; const mx = Math.max(c[0], c[1], c[2]), mn = Math.min(c[0], c[1], c[2]); return mx < 64 ? 0 : (mx - mn) / mx; };
+  const hue = (c) => { const [r, g, b] = c.map((v) => v / 255); const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; if (!d) return 0; const k = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return (k * 60 + 360) % 360; };
+  const colourful = cands.filter((c) => chroma(c.color) > 0.35);
+  const scored = cands.map((c) => {
+    // A solid fill reads heavier than its outline area; text weight comes from its size instead.
+    const areaScore = Math.min(1, Math.sqrt((c.w * c.h) / (w * h)) * (c.kind === 'shape' ? 2.5 : 2));
+    const size = c.kind === 'text'
+      ? Math.min(1, (c.font / maxFont) ** 1.5 * (c.weight >= 600 ? 1 : 0.8) + Math.min(0.15, (c.w * c.h) / (w * h)))
+      : c.kind === 'shape' && c.font ? Math.max(areaScore, (c.font / maxFont) ** 1.5) : areaScore;
+    const contrast = Math.min(1, (c.contrast - 1) / 10);
+    const position = Math.max(0, 1 - 0.6 * ((c.y + c.h / 2) / h) - 0.2 * ((c.x + c.w / 2) / w));
+    // Isolation (Von Restorff): a saturated colour that few other things of the same kind share
+    // (a teal button still stands out from other fills when some small text is teal too).
+    let isolation = 0;
+    if (chroma(c.color) > 0.35) {
+      const same = colourful.filter((o) => o !== c && o.kind === c.kind && Math.abs(((hue(o.color) - hue(c.color) + 540) % 360) - 180) < 30).length;
+      isolation = same <= 2 ? 1 : same <= 5 ? 0.4 : 0;
+    }
+    const score = 0.4 * size + 0.25 * contrast + 0.2 * position + 0.15 * isolation + (c.kind === 'media' ? 0.15 : 0);
+    return { ...c, score: Math.round(score * 100) / 100 };
+  });
+  return scored.sort((a, b) => b.score - a.score).map((c, i) => ({ rank: i + 1, kind: c.kind, label: c.label, score: c.score, x: c.x, y: c.y, w: c.w, h: c.h, primary: c.primary }));
+}
+
+// The top of the predicted attention order, and an issue when the primary action isn't among the first three.
+function attentionReport(cands, w, h, primarySelector) {
+  const ranked = attention(cands, w, h);
+  const issues = [];
+  const p = ranked.find((c) => c.primary);
+  if (primarySelector && p && p.rank > 3) {
+    issues.push({ type: 'primary-not-salient', label: p.label, rank: p.rank, first: ranked.slice(0, 3).map((c) => c.label || c.kind) });
+  }
+  return { attention: ranked.slice(0, 8), primaryRank: p ? p.rank : null, issues };
+}
+
 function analyze(data, w, h, primarySelector) {
   const issues = [];
   const first = data.targets.filter((t) => t.firstScreen);
@@ -186,6 +290,25 @@ function drawOverlay({ targets, h, colors }) {
   document.body.appendChild(root);
 }
 
+// Numbered outlines on the top five of the predicted attention order.
+function drawAttention({ items }) {
+  document.getElementById('prepon-tapmap')?.remove();
+  const root = document.createElement('div');
+  root.id = 'prepon-tapmap';
+  items.slice(0, 5).forEach((t) => {
+    const d = document.createElement('div');
+    d.className = 'box';
+    const c = t.primary ? '#7c3aed' : '#1d4ed8';
+    Object.assign(d.style, { left: `${t.x}px`, top: `${t.y}px`, width: `${t.w}px`, height: `${t.h}px`, borderColor: c });
+    const s = document.createElement('span');
+    s.textContent = `${t.rank}${t.primary ? ' ★' : ''}`;
+    s.style.background = c;
+    d.appendChild(s);
+    root.appendChild(d);
+  });
+  document.body.appendChild(root);
+}
+
 async function main() {
   const a = args(process.argv.slice(2));
   if (!a.base || !a.routes) {
@@ -236,16 +359,24 @@ async function main() {
           continue;
         }
         const result = analyze(data, w, h, a.primary);
+        const cands = await page.evaluate(collectAttentionInPage, { primary: typeof a.primary === 'string' ? a.primary : null });
+        const att = attentionReport(cands, w, h, a.primary);
+        Object.assign(result, { attention: att.attention, primaryRank: att.primaryRank });
+        result.issues.push(...att.issues);
         if (pageErrors.length) result.pageErrors = pageErrors;
         const blurFile = path.join(dir, `${slug}-blur@${w}.png`);
         await page.addStyleTag({ content: 'html { filter: blur(6px); }' });
         await page.screenshot({ path: blurFile, animations: 'disabled' });
         await page.addStyleTag({ content: 'html { filter: none !important; }' + OVERLAY_CSS });
+        await page.evaluate(drawAttention, { items: att.attention });
+        const attFile = path.join(dir, `${slug}-attention@${w}.png`);
+        await page.screenshot({ path: attFile, animations: 'disabled' });
+        await page.evaluate(() => document.getElementById('prepon-tapmap')?.remove());
         await page.evaluate(drawOverlay, { targets: result.targets, h, colors: ZONE_COLOR });
         const tapFile = path.join(dir, `${slug}-taps@${w}.png`);
         await page.screenshot({ path: tapFile, animations: 'disabled' });
         const rel = (f) => path.relative(root, f).split(path.sep).join('/');
-        results.push({ route, finalUrl: page.url(), overlay: rel(tapFile), blur: rel(blurFile), ...result });
+        results.push({ route, finalUrl: page.url(), overlay: rel(tapFile), blur: rel(blurFile), attentionMap: rel(attFile), ...result });
       } catch (e) {
         results.push({ route, error: String(e.message || e).split('\n')[0] });
       }
@@ -255,11 +386,16 @@ async function main() {
     await browser.close();
   }
   const issues = results.reduce((n, r) => n + ((r.issues && r.issues.length) || (r.error ? 1 : 0)), 0);
-  process.stdout.write(JSON.stringify({ viewport: `${w}x${h}`, legend: 'overlay boxes: green easy, amber stretch, red hard, purple too small; ★ primary', results }, null, 2) + '\n');
+  process.stdout.write(JSON.stringify({
+    viewport: `${w}x${h}`,
+    legend: 'overlay boxes: green easy, amber stretch, red hard, purple too small; ★ primary',
+    attentionNote: 'attention is a predicted order (size, contrast, position, colour), not measured eye-tracking; real heatmaps win',
+    results,
+  }, null, 2) + '\n');
   return issues ? 1 : 0;
 }
 
 if (require.main === module) {
   main().then((c) => { process.exitCode = c; }, (e) => { process.stderr.write(String(e.stack || e) + '\n'); process.exitCode = 1; });
 }
-module.exports = { thumbZone, analyze, LIMITS, args, loadPlaywright };
+module.exports = { thumbZone, analyze, attention, attentionReport, LIMITS, args, loadPlaywright };

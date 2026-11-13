@@ -9,6 +9,7 @@ This file has no definitions. You already know them. For each law it gives when 
 - [Fitts's law](#fittss-law)
 - [Jakob's law](#jakobs-law)
 - [Tesler's law (conservation of complexity)](#teslers-law)
+- [Interaction cost](#interaction-cost)
 - [Postel's law (robustness principle)](#postels-law)
 - [Doherty threshold](#doherty-threshold)
 - [Von Restorff effect (isolation)](#von-restorff-effect)
@@ -69,6 +70,16 @@ This file has no definitions. You already know them. For each law it gives when 
 **Check.** For each field, ask whether the system already knows the answer or could derive it. For each instruction text, ask whether the system could do the step instead of explaining it.
 
 **Misuse.** Hiding complexity the user actually needs to see. In finance and government, users often must understand a consequence (fees, deadlines, legal effects). Making that disappear isn't simplification. Show the consequence in plain language and remove the work.
+
+## Interaction cost
+
+**Applies when** a task is done often: approvals, data entry, triage queues, checkout, search and filter, and settings people change regularly. Every click, tap, typed field, scroll, and decision is a cost the user pays, and frequent tasks pay it many times a day.
+
+**Rule.** Count the steps on the paths users take most and cut them. Act in place instead of opening a page (inline edit, row actions, bulk select). Prefill and default from what's known (see Tesler's law), and remember the last choice. Put the frequent action one step away and the rare one behind "More". Give repeated work keyboard shortcuts. Fewer steps only counts when each remaining step is obvious: a click users are sure about costs less than a choice they have to think about.
+
+**Check.** Name the top three tasks for the screen. For each, list the steps from arrival to done (click, type, scroll, choose, wait) and count them. Then look for steps the system could take instead, steps that open a page where an inline action would do, and frequent actions hidden behind a menu. When changing UI, give the count before and after.
+
+**Misuse.** Removing steps that protect people: confirmation before destructive or irreversible actions, and review before payment or submission are deliberate costs. So is putting every option on one screen to save a click. That trades clicks for thinking, which costs more. The "three-click rule" is folklore; users don't mind clicks when each one clearly moves them forward.
 
 ## Postel's law
 
