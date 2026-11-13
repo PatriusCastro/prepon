@@ -154,7 +154,7 @@ html:has(.site) { scroll-padding-top: var(--s-4); -webkit-text-size-adjust: 100%
    right after them, then GitHub and Install at the far end. The current section is ink text with an accent bar on
    the header's bottom edge. The page reserves --header-h through scroll-padding (WCAG 2.4.11). */
 .site { --header-h: 0rem; }
-.site-header { z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); }
+.site-header { position: relative; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); }
 .header-row {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'brand actions' 'nav nav';
   align-items: center; column-gap: var(--s-4); padding-block: var(--s-2);
@@ -304,10 +304,15 @@ body:has(.site) {
   background: var(--bg); color: var(--ink);
 }
 .site:has(.hero) .site-header { border-bottom-color: transparent; }
+/* The line fades in over the first 80 px of scroll. It's a 1 px element fading (opacity runs on the compositor),
+   not an animated border colour, which would need the main thread on every scroll frame. */
 @supports (animation-timeline: scroll()) {
-  .site:has(.hero) .site-header { animation: header-line linear both; animation-timeline: scroll(); animation-range: 0 80px; }
+  .site:has(.hero) .site-header::after {
+    content: ''; position: absolute; inset: auto 0 -1px; height: 1px; background: var(--line); opacity: 0;
+    animation: header-line linear both; animation-timeline: scroll(); animation-range: 0 80px;
+  }
 }
-@keyframes header-line { to { border-bottom-color: var(--line); } }
+@keyframes header-line { to { opacity: 1; } }
 
 .hero { padding-block: var(--s-6) var(--s-8); overflow-x: clip; }
 .hero-center { display: grid; justify-items: center; gap: var(--s-6); text-align: center; }
@@ -409,17 +414,82 @@ body:has(.hero) .section-head p:not(.eyebrow) { color: var(--soft); }
 }
 /* Motion only when welcome. Reduced motion keeps the still frame above: three rules in, three fixes out, no button. */
 @media (prefers-reduced-motion: no-preference) {
-  .lens-chip, .lens-chip.is-out { offset-distance: 0%; opacity: 0; animation: lens-flow 6s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
+  /* Chips move with translate along keyframes sampled from their curves (the generated lens-in/out blocks below),
+     so the GPU runs the motion even on a slow phone; animating offset-distance needed the main thread every frame.
+     The fade is a second animation with the flow easing. */
+  .lens .lens-stage .lens-chip {
+    offset-path: none; transform: translate(-50%, -50%); opacity: 0;
+    animation: lens-in-1 6s linear infinite, lens-fade 6s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  }
+  .lens .lens-stage .is-in.p2 { animation-name: lens-in-2, lens-fade; }
+  .lens .lens-stage .is-in.p3 { animation-name: lens-in-3, lens-fade; }
+  .lens .lens-stage .is-out.p1 { animation-name: lens-out-1, lens-fade; }
+  .lens .lens-stage .is-out.p2 { animation-name: lens-out-2, lens-fade; }
+  .lens .lens-stage .is-out.p3 { animation-name: lens-out-3, lens-fade; }
   .lens-chip.is-extra { display: block; }
   .lens-ring i { animation: lens-spin 60s linear infinite; }
   .lens-ring i + i { animation-duration: 90s; animation-direction: reverse; }
-  .lens.is-paused * { animation-play-state: paused; }
+  /* Paused by the button, or by Home.tsx while the lens is off screen, so the loop costs nothing nobody sees. */
+  .lens:is(.is-paused, .is-off) .lens-stage .lens-chip, .lens:is(.is-paused, .is-off) .lens-ring i { animation-play-state: paused; }
+  /* Mouse play (Home.tsx): the π and inner ring look toward the pointer; a chip under the pointer stops the flow. */
+  .lens-ring span, .lens-ring i + i { transition: translate 400ms var(--ease-out); }
+  .lens-ring span { translate: calc(var(--lx, 0) * 12px) calc(var(--ly, 0) * 12px); }
+  .lens-ring i + i { translate: calc(var(--lx, 0) * 5px) calc(var(--ly, 0) * 5px); }
+  .lens-stage.has-lit .lens-chip { animation-play-state: paused; filter: opacity(0.3); transition: filter 150ms; }
+  .lens-stage.has-lit .lens-chip.is-lit { filter: none; border-color: currentColor; }
+  .lens-stage.has-lit .lens-chip.is-in.is-lit { color: var(--ink); }
 }
+
+/* Cursor (ui.tsx): a dot at the pointer and a ring trailing it; translate is set from JS, scale and colour here.
+   Its own view-transition name keeps it out of the page snapshot, so it doesn't fade with the page. The system
+   arrow is hidden only once .has-cursor is set by a real mouse move; text fields keep their I-beam. */
+html.has-cursor, html.has-cursor * { cursor: none !important; }
+html.has-cursor :is(input, textarea, [contenteditable]) { cursor: text !important; }
+/* Difference blending inverts whatever is under it, so the white ring and dot read on the dark site and on the light
+   demos alike; on the dark site the result looks the same as plain white. */
+.cursor { position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: 0; transition: opacity 200ms; view-transition-name: cursor; mix-blend-mode: difference; }
+.cursor.is-on { opacity: 1; }
+/* Spins only while shown: an endless animation on a hidden element still wakes the GPU every frame. */
+.cursor.is-on .cursor-lens { animation: lens-spin 10s linear infinite; }
+.cursor.is-text { opacity: 0; }
+.cursor i { position: absolute; left: 0; top: 0; border-radius: 50%; }
+.cursor-dot { width: 6px; height: 6px; margin: -3px 0 0 -3px; background: #fff; transition: background-color 150ms; }
+.cursor-lens {
+  width: 2.25rem; height: 2.25rem; margin: -1.125rem 0 0 -1.125rem; border: 1.5px dashed #fff; opacity: 0.75;
+  transition: opacity 200ms, scale 250ms var(--ease-out), border-color 200ms, background-color 200ms;
+}
+.cursor.is-over .cursor-dot { background: var(--accent); }
+.cursor.is-over .cursor-lens { scale: 1.6; opacity: 1; border-style: solid; border-color: var(--accent); background: rgb(240 162 122 / 0.08); }
+.cursor.is-down .cursor-lens { scale: 0.8; }
+.cursor.is-over.is-down .cursor-lens { scale: 1.3; }
 @media (prefers-reduced-motion: reduce) { .lens-pause { display: none; } }
-@keyframes lens-flow {
-  0% { offset-distance: 0%; opacity: 0; transform: scale(0.9); }
-  12%, 78% { opacity: 1; transform: none; }
-  100% { offset-distance: 100%; opacity: 0; transform: scale(0.6); }
+@keyframes lens-fade {
+  0% { opacity: 0; scale: 0.9; }
+  12%, 78% { opacity: 1; scale: 1; }
+  100% { opacity: 0; scale: 0.6; }
+}
+/* Generated: the lens curves sampled into translate keyframes (25 points each, flow easing baked in). */
+@keyframes lens-in-1{0%{translate:80px 0px}4.2%{translate:80px 0.8px}8.3%{translate:80px 3.6px}12.5%{translate:80.1px 8.8px}16.7%{translate:80.4px 17.2px}20.8%{translate:81.1px 29.6px}25%{translate:83px 46.9px}29.2%{translate:87.1px 69.6px}33.3%{translate:94.9px 96.4px}37.5%{translate:106.2px 123.8px}41.7%{translate:118.8px 148.5px}45.8%{translate:129.5px 169.7px}50%{translate:137.3px 187.8px}54.2%{translate:142.4px 203px}58.3%{translate:145.6px 215.7px}62.5%{translate:147.5px 226.1px}66.7%{translate:148.6px 234.7px}70.8%{translate:149.3px 241.6px}75%{translate:149.7px 247.1px}79.2%{translate:149.9px 251.5px}83.3%{translate:149.9px 254.8px}87.5%{translate:150px 257.2px}91.7%{translate:150px 258.8px}95.8%{translate:150px 259.7px}100%{translate:150px 260px}}
+@keyframes lens-in-2{0%{translate:150px 0px}4.2%{translate:150px 0.8px}8.3%{translate:150px 3.4px}12.5%{translate:150px 8.4px}16.7%{translate:150px 16.4px}20.8%{translate:150px 28.2px}25%{translate:150px 44.8px}29.2%{translate:150px 66.9px}33.3%{translate:150px 93.5px}37.5%{translate:150px 121.8px}41.7%{translate:150px 148.2px}45.8%{translate:150px 170.9px}50%{translate:150px 189.6px}54.2%{translate:150px 205px}58.3%{translate:150px 217.4px}62.5%{translate:150px 227.6px}66.7%{translate:150px 235.8px}70.8%{translate:150px 242.4px}75%{translate:150px 247.7px}79.2%{translate:150px 251.9px}83.3%{translate:150px 255px}87.5%{translate:150px 257.3px}91.7%{translate:150px 258.8px}95.8%{translate:150px 259.7px}100%{translate:150px 260px}}
+@keyframes lens-in-3{0%{translate:220px 0px}4.2%{translate:220px 0.8px}8.3%{translate:220px 3.6px}12.5%{translate:219.9px 8.8px}16.7%{translate:219.6px 17.2px}20.8%{translate:218.9px 29.6px}25%{translate:217px 46.9px}29.2%{translate:212.9px 69.6px}33.3%{translate:205.1px 96.4px}37.5%{translate:193.8px 123.8px}41.7%{translate:181.2px 148.5px}45.8%{translate:170.5px 169.7px}50%{translate:162.7px 187.8px}54.2%{translate:157.6px 203px}58.3%{translate:154.4px 215.7px}62.5%{translate:152.5px 226.1px}66.7%{translate:151.4px 234.7px}70.8%{translate:150.7px 241.6px}75%{translate:150.3px 247.1px}79.2%{translate:150.1px 251.5px}83.3%{translate:150.1px 254.8px}87.5%{translate:150px 257.2px}91.7%{translate:150px 258.8px}95.8%{translate:150px 259.7px}100%{translate:150px 260px}}
+@keyframes lens-out-1{0%{translate:150px 260px}4.2%{translate:150px 260.8px}8.3%{translate:150px 263.6px}12.5%{translate:149.8px 268.8px}16.7%{translate:149.4px 277.2px}20.8%{translate:148.1px 289.5px}25%{translate:145.1px 306.6px}29.2%{translate:138.5px 328.8px}33.3%{translate:127.5px 354.4px}37.5%{translate:114px 380.8px}41.7%{translate:101.9px 405.7px}45.8%{translate:93.4px 427.9px}50%{translate:88px 446.8px}54.2%{translate:84.7px 462.6px}58.3%{translate:82.7px 475.5px}62.5%{translate:81.5px 486.1px}66.7%{translate:80.8px 494.7px}70.8%{translate:80.4px 501.6px}75%{translate:80.2px 507.1px}79.2%{translate:80.1px 511.5px}83.3%{translate:80px 514.8px}87.5%{translate:80px 517.2px}91.7%{translate:80px 518.8px}95.8%{translate:80px 519.7px}100%{translate:80px 520px}}
+@keyframes lens-out-2{0%{translate:150px 260px}4.2%{translate:150px 260.8px}8.3%{translate:150px 263.4px}12.5%{translate:150px 268.4px}16.7%{translate:150px 276.4px}20.8%{translate:150px 288.2px}25%{translate:150px 304.8px}29.2%{translate:150px 326.9px}33.3%{translate:150px 353.5px}37.5%{translate:150px 381.8px}41.7%{translate:150px 408.2px}45.8%{translate:150px 430.9px}50%{translate:150px 449.6px}54.2%{translate:150px 465px}58.3%{translate:150px 477.4px}62.5%{translate:150px 487.6px}66.7%{translate:150px 495.8px}70.8%{translate:150px 502.4px}75%{translate:150px 507.7px}79.2%{translate:150px 511.9px}83.3%{translate:150px 515px}87.5%{translate:150px 517.3px}91.7%{translate:150px 518.8px}95.8%{translate:150px 519.7px}100%{translate:150px 520px}}
+@keyframes lens-out-3{0%{translate:150px 260px}4.2%{translate:150px 260.8px}8.3%{translate:150px 263.6px}12.5%{translate:150.2px 268.8px}16.7%{translate:150.6px 277.2px}20.8%{translate:151.9px 289.5px}25%{translate:154.9px 306.6px}29.2%{translate:161.5px 328.8px}33.3%{translate:172.5px 354.4px}37.5%{translate:186px 380.8px}41.7%{translate:198.1px 405.7px}45.8%{translate:206.6px 427.9px}50%{translate:212px 446.8px}54.2%{translate:215.3px 462.6px}58.3%{translate:217.3px 475.5px}62.5%{translate:218.5px 486.1px}66.7%{translate:219.2px 494.7px}70.8%{translate:219.6px 501.6px}75%{translate:219.8px 507.1px}79.2%{translate:219.9px 511.5px}83.3%{translate:220px 514.8px}87.5%{translate:220px 517.2px}91.7%{translate:220px 518.8px}95.8%{translate:220px 519.7px}100%{translate:220px 520px}}
+@media (min-width: 64rem) {
+@keyframes lens-in-1{0%{translate:40px 40px}4.2%{translate:41.4px 40px}8.3%{translate:46.3px 40px}12.5%{translate:55.3px 40.2px}16.7%{translate:69.8px 40.9px}20.8%{translate:91.1px 42.9px}25%{translate:120.9px 47.4px}29.2%{translate:159.7px 57px}33.3%{translate:205px 73.8px}37.5%{translate:250.9px 96.7px}41.7%{translate:292.3px 120.9px}45.8%{translate:327.6px 142px}50%{translate:357.5px 158.4px}54.2%{translate:382.8px 170px}58.3%{translate:404px 177.9px}62.5%{translate:421.7px 183px}66.7%{translate:436.3px 186.1px}70.8%{translate:448.2px 188px}75%{translate:457.7px 189px}79.2%{translate:465.2px 189.6px}83.3%{translate:470.9px 189.8px}87.5%{translate:475.1px 190px}91.7%{translate:477.9px 190px}95.8%{translate:479.5px 190px}100%{translate:480px 190px}}
+@keyframes lens-in-2{0%{translate:40px 190px}4.2%{translate:41.4px 190px}8.3%{translate:45.8px 190px}12.5%{translate:54.3px 190px}16.7%{translate:67.8px 190px}20.8%{translate:87.7px 190px}25%{translate:115.9px 190px}29.2%{translate:153.1px 190px}33.3%{translate:198.2px 190px}37.5%{translate:246.1px 190px}41.7%{translate:290.7px 190px}45.8%{translate:329.1px 190px}50%{translate:360.9px 190px}54.2%{translate:386.9px 190px}58.3%{translate:408px 190px}62.5%{translate:425.1px 190px}66.7%{translate:439.1px 190px}70.8%{translate:450.3px 190px}75%{translate:459.2px 190px}79.2%{translate:466.2px 190px}83.3%{translate:471.6px 190px}87.5%{translate:475.4px 190px}91.7%{translate:478.1px 190px}95.8%{translate:479.5px 190px}100%{translate:480px 190px}}
+@keyframes lens-in-3{0%{translate:40px 340px}4.2%{translate:41.4px 340px}8.3%{translate:46.3px 340px}12.5%{translate:55.3px 339.8px}16.7%{translate:69.8px 339.1px}20.8%{translate:91.1px 337.1px}25%{translate:120.9px 332.6px}29.2%{translate:159.7px 323px}33.3%{translate:205px 306.2px}37.5%{translate:250.9px 283.3px}41.7%{translate:292.3px 259.1px}45.8%{translate:327.6px 238px}50%{translate:357.5px 221.6px}54.2%{translate:382.8px 210px}58.3%{translate:404px 202.1px}62.5%{translate:421.7px 197px}66.7%{translate:436.3px 193.9px}70.8%{translate:448.2px 192px}75%{translate:457.7px 191px}79.2%{translate:465.2px 190.4px}83.3%{translate:470.9px 190.2px}87.5%{translate:475.1px 190px}91.7%{translate:477.9px 190px}95.8%{translate:479.5px 190px}100%{translate:480px 190px}}
+@keyframes lens-out-1{0%{translate:480px 190px}4.2%{translate:481.4px 190px}8.3%{translate:486.3px 189.9px}12.5%{translate:495.3px 189.5px}16.7%{translate:509.7px 188.2px}20.8%{translate:530.8px 184.7px}25%{translate:559.9px 176.6px}29.2%{translate:596.8px 161.2px}33.3%{translate:639.2px 138.1px}37.5%{translate:683.2px 111.6px}41.7%{translate:724.9px 88.2px}45.8%{translate:762.2px 70.7px}50%{translate:794.2px 58.9px}54.2%{translate:821px 51.4px}58.3%{translate:843.1px 46.7px}62.5%{translate:861.3px 43.8px}66.7%{translate:876.2px 42.1px}70.8%{translate:888.1px 41.1px}75%{translate:897.7px 40.5px}79.2%{translate:905.2px 40.2px}83.3%{translate:910.9px 40.1px}87.5%{translate:915.1px 40px}91.7%{translate:917.9px 40px}95.8%{translate:919.5px 40px}100%{translate:920px 40px}}
+@keyframes lens-out-2{0%{translate:480px 190px}4.2%{translate:481.4px 190px}8.3%{translate:485.8px 190px}12.5%{translate:494.3px 190px}16.7%{translate:507.8px 190px}20.8%{translate:527.7px 190px}25%{translate:555.9px 190px}29.2%{translate:593.1px 190px}33.3%{translate:638.2px 190px}37.5%{translate:686.1px 190px}41.7%{translate:730.7px 190px}45.8%{translate:769.1px 190px}50%{translate:800.9px 190px}54.2%{translate:826.9px 190px}58.3%{translate:848px 190px}62.5%{translate:865.1px 190px}66.7%{translate:879.1px 190px}70.8%{translate:890.3px 190px}75%{translate:899.2px 190px}79.2%{translate:906.2px 190px}83.3%{translate:911.6px 190px}87.5%{translate:915.4px 190px}91.7%{translate:918.1px 190px}95.8%{translate:919.5px 190px}100%{translate:920px 190px}}
+@keyframes lens-out-3{0%{translate:480px 190px}4.2%{translate:481.4px 190px}8.3%{translate:486.3px 190.1px}12.5%{translate:495.3px 190.5px}16.7%{translate:509.7px 191.8px}20.8%{translate:530.8px 195.3px}25%{translate:559.9px 203.4px}29.2%{translate:596.8px 218.8px}33.3%{translate:639.2px 241.9px}37.5%{translate:683.2px 268.4px}41.7%{translate:724.9px 291.8px}45.8%{translate:762.2px 309.3px}50%{translate:794.2px 321.1px}54.2%{translate:821px 328.6px}58.3%{translate:843.1px 333.3px}62.5%{translate:861.3px 336.2px}66.7%{translate:876.2px 337.9px}70.8%{translate:888.1px 338.9px}75%{translate:897.7px 339.5px}79.2%{translate:905.2px 339.8px}83.3%{translate:910.9px 339.9px}87.5%{translate:915.1px 340px}91.7%{translate:917.9px 340px}95.8%{translate:919.5px 340px}100%{translate:920px 340px}}
+}
+@media (min-width: 82rem) {
+@keyframes lens-in-1{0%{translate:0px 50px}4.2%{translate:2px 50px}8.3%{translate:8.8px 50px}12.5%{translate:21.6px 50.3px}16.7%{translate:41.9px 51.1px}20.8%{translate:72.1px 53.2px}25%{translate:114.3px 58.2px}29.2%{translate:169.6px 68.6px}33.3%{translate:235.3px 86.6px}37.5%{translate:303.4px 110.9px}41.7%{translate:365.8px 136.7px}45.8%{translate:419.3px 159.1px}50%{translate:464.1px 176.4px}54.2%{translate:501.4px 188.7px}58.3%{translate:532.2px 197px}62.5%{translate:557.6px 202.4px}66.7%{translate:578.3px 205.7px}70.8%{translate:595.2px 207.8px}75%{translate:608.6px 208.9px}79.2%{translate:619.2px 209.5px}83.3%{translate:627.2px 209.8px}87.5%{translate:633.1px 209.9px}91.7%{translate:637.1px 210px}95.8%{translate:639.3px 210px}100%{translate:640px 210px}}
+@keyframes lens-in-2{0%{translate:0px 210px}4.2%{translate:2px 210px}8.3%{translate:8.5px 210px}12.5%{translate:20.8px 210px}16.7%{translate:40.4px 210px}20.8%{translate:69.5px 210px}25%{translate:110.3px 210px}29.2%{translate:164.6px 210px}33.3%{translate:230.1px 210px}37.5%{translate:299.7px 210px}41.7%{translate:364.7px 210px}45.8%{translate:420.6px 210px}50%{translate:466.8px 210px}54.2%{translate:504.5px 210px}58.3%{translate:535.2px 210px}62.5%{translate:560.2px 210px}66.7%{translate:580.5px 210px}70.8%{translate:596.8px 210px}75%{translate:609.8px 210px}79.2%{translate:620px 210px}83.3%{translate:627.7px 210px}87.5%{translate:633.4px 210px}91.7%{translate:637.2px 210px}95.8%{translate:639.3px 210px}100%{translate:640px 210px}}
+@keyframes lens-in-3{0%{translate:0px 370px}4.2%{translate:2px 370px}8.3%{translate:8.8px 370px}12.5%{translate:21.6px 369.7px}16.7%{translate:41.9px 368.9px}20.8%{translate:72.1px 366.8px}25%{translate:114.3px 361.8px}29.2%{translate:169.6px 351.4px}33.3%{translate:235.3px 333.4px}37.5%{translate:303.4px 309.1px}41.7%{translate:365.8px 283.3px}45.8%{translate:419.3px 260.9px}50%{translate:464.1px 243.6px}54.2%{translate:501.4px 231.3px}58.3%{translate:532.2px 223px}62.5%{translate:557.6px 217.6px}66.7%{translate:578.3px 214.3px}70.8%{translate:595.2px 212.2px}75%{translate:608.6px 211.1px}79.2%{translate:619.2px 210.5px}83.3%{translate:627.2px 210.2px}87.5%{translate:633.1px 210.1px}91.7%{translate:637.1px 210px}95.8%{translate:639.3px 210px}100%{translate:640px 210px}}
+@keyframes lens-out-1{0%{translate:640px 210px}4.2%{translate:642px 210px}8.3%{translate:648.8px 209.9px}12.5%{translate:661.6px 209.5px}16.7%{translate:681.9px 208px}20.8%{translate:711.9px 204.2px}25%{translate:753.5px 195.6px}29.2%{translate:807.4px 179.4px}33.3%{translate:871px 154.9px}37.5%{translate:937.6px 126.8px}41.7%{translate:1000.3px 101.9px}45.8%{translate:1055.3px 83.3px}50%{translate:1101.6px 70.7px}54.2%{translate:1140px 62.5px}58.3%{translate:1171.5px 57.4px}62.5%{translate:1197.2px 54.3px}66.7%{translate:1218.2px 52.3px}70.8%{translate:1235.1px 51.2px}75%{translate:1248.6px 50.6px}79.2%{translate:1259.2px 50.3px}83.3%{translate:1267.2px 50.1px}87.5%{translate:1273.1px 50px}91.7%{translate:1277.1px 50px}95.8%{translate:1279.3px 50px}100%{translate:1280px 50px}}
+@keyframes lens-out-2{0%{translate:640px 210px}4.2%{translate:642px 210px}8.3%{translate:648.5px 210px}12.5%{translate:660.8px 210px}16.7%{translate:680.4px 210px}20.8%{translate:709.5px 210px}25%{translate:750.3px 210px}29.2%{translate:804.6px 210px}33.3%{translate:870.1px 210px}37.5%{translate:939.7px 210px}41.7%{translate:1004.7px 210px}45.8%{translate:1060.6px 210px}50%{translate:1106.8px 210px}54.2%{translate:1144.5px 210px}58.3%{translate:1175.2px 210px}62.5%{translate:1200.2px 210px}66.7%{translate:1220.5px 210px}70.8%{translate:1236.8px 210px}75%{translate:1249.8px 210px}79.2%{translate:1260px 210px}83.3%{translate:1267.7px 210px}87.5%{translate:1273.4px 210px}91.7%{translate:1277.2px 210px}95.8%{translate:1279.3px 210px}100%{translate:1280px 210px}}
+@keyframes lens-out-3{0%{translate:640px 210px}4.2%{translate:642px 210px}8.3%{translate:648.8px 210.1px}12.5%{translate:661.6px 210.5px}16.7%{translate:681.9px 212px}20.8%{translate:711.9px 215.8px}25%{translate:753.5px 224.4px}29.2%{translate:807.4px 240.6px}33.3%{translate:871px 265.1px}37.5%{translate:937.6px 293.2px}41.7%{translate:1000.3px 318.1px}45.8%{translate:1055.3px 336.7px}50%{translate:1101.6px 349.3px}54.2%{translate:1140px 357.5px}58.3%{translate:1171.5px 362.6px}62.5%{translate:1197.2px 365.7px}66.7%{translate:1218.2px 367.7px}70.8%{translate:1235.1px 368.8px}75%{translate:1248.6px 369.4px}79.2%{translate:1259.2px 369.7px}83.3%{translate:1267.2px 369.9px}87.5%{translate:1273.1px 370px}91.7%{translate:1277.1px 370px}95.8%{translate:1279.3px 370px}100%{translate:1280px 370px}}
 }
 @keyframes lens-spin { to { transform: rotate(1turn); } }
 
@@ -438,6 +508,16 @@ body:has(.hero) .section-head p:not(.eyebrow) { color: var(--soft); }
 }
 
 /* One entrance on load: three groups rise 8px and fade in, 40ms apart, done by ~330ms. */
+/* Page change (router.tsx, View Transitions API): the old page lifts 8px and fades in 160 ms, the new one rises
+   12px and fades in 260 ms, overlapping slightly. The header and the docs sidebar have their own names, so they stay
+   still while the page under them changes. Skipped entirely under reduced motion (router.tsx never starts it). */
+.site-header { view-transition-name: site-header; }
+.docs-side { view-transition-name: docs-side; }
+::view-transition-old(root) { animation: page-out 160ms var(--ease-out) both; }
+::view-transition-new(root) { animation: page-in 260ms var(--ease-out) 60ms both; }
+@keyframes page-out { to { opacity: 0; transform: translateY(-8px); } }
+@keyframes page-in { from { opacity: 0; transform: translateY(12px); } }
+
 .rise { animation: rise 250ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms); }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 
@@ -506,6 +586,8 @@ body:has(.hero) .toy-input .section-head { margin-bottom: var(--s-4); }
   grid-area: 1 / 1; margin: 0; padding: var(--s-3) var(--s-4) var(--s-3) 3.25rem; border: 0;
   font: var(--t-sm)/1.6 var(--mono); letter-spacing: 0; tab-size: 2; white-space: pre-wrap; overflow-wrap: anywhere;
 }
+/* The mirror is drawn above the textarea (its lines are positioned), so it must let the mouse through to the text. */
+.toy-mirror { pointer-events: none; }
 .toy-mirror div {
   position: relative; counter-increment: ln; color: transparent;
   /* Bleed the highlight to both edges without changing the wrap width. */
@@ -518,7 +600,8 @@ body:has(.hero) .toy-input .section-head { margin-bottom: var(--s-4); }
 }
 .toy-mirror .is-flagged { background: rgb(240 162 122 / 0.12); }
 .toy-mirror .is-flagged::before { color: var(--code-accent); opacity: 1; }
-.toy-mirror .is-active { background: rgb(240 162 122 / 0.28); }
+.toy-mirror .is-active, .toy-mirror .is-peek { background: rgb(240 162 122 / 0.28); }
+.toy-mirror div { transition: background-color 150ms; }
 .toy-code {
   display: block; width: 100%; overflow: hidden; resize: none;
   background: transparent; color: var(--code-ink); caret-color: var(--code-accent);
@@ -571,8 +654,11 @@ body:has(.hero) .toy-input .section-head { margin-bottom: var(--s-4); }
 .compare-tag.is-after { color: var(--ok, var(--ink)); background: var(--ok-bg, var(--sunk)); border-color: var(--ok-line, var(--line)); }
 .compare-view { position: relative; touch-action: pan-y; cursor: ew-resize; user-select: none; }
 .compare-view img { display: block; width: 100%; height: auto; }
-.compare-after { position: absolute; inset: 0; clip-path: inset(0 0 0 var(--pos)); }
-.compare-handle { position: absolute; inset: 0; transform: translateX(var(--pos)); pointer-events: none; }
+/* The after image is revealed with two opposite translates (showcase.tsx), not clip-path on a variable, so the divider
+   and its one-time sweep run on the compositor. Animating --pos itself re-ran style and paint every frame. */
+.compare-clip { position: absolute; inset: 0; overflow: hidden; translate: var(--pos) 0; }
+.compare-after { translate: calc(-1 * var(--pos)) 0; }
+.compare-handle { position: absolute; inset: 0; translate: var(--pos) 0; pointer-events: none; }
 .compare-handle::before { content: ''; position: absolute; top: 0; bottom: 0; left: -1px; width: 2px; background: var(--ink); box-shadow: 0 0 0 1px rgb(0 0 0 / 0.25); }
 .compare-handle svg {
   position: absolute; top: 50%; left: 0; transform: translate(-50%, -50%); width: 2.5rem; height: 2.5rem; padding: 0.625rem;
@@ -582,11 +668,12 @@ body:has(.hero) .toy-input .section-head { margin-bottom: var(--s-4); }
 .compare-range { display: flex; align-items: center; gap: var(--s-3); flex: 1 1 18rem; font: var(--t-sm)/1 var(--mono); color: var(--muted); }
 .compare-range input { flex: 1; min-width: 0; min-height: var(--target); margin: 0; accent-color: var(--accent); }
 /* On arrival the divider sweeps once (left, right, back to the middle) so it's clear the capture can be dragged. */
-@property --pos { syntax: '<percentage>'; inherits: true; initial-value: 50%; }
 @media (prefers-reduced-motion: no-preference) {
-  .compare.is-in .compare-view { animation: compare-peek 1.8s cubic-bezier(0.45, 0, 0.25, 1) 400ms; }
+  .compare.is-in :is(.compare-clip, .compare-handle) { animation: compare-peek 1.8s cubic-bezier(0.45, 0, 0.25, 1) 400ms; }
+  .compare.is-in .compare-after { animation: compare-peek-back 1.8s cubic-bezier(0.45, 0, 0.25, 1) 400ms; }
 }
-@keyframes compare-peek { 0% { --pos: 50%; } 35% { --pos: 25%; } 70% { --pos: 75%; } 100% { --pos: 50%; } }
+@keyframes compare-peek { 0%, 100% { translate: 50% 0; } 35% { translate: 25% 0; } 70% { translate: 75% 0; } }
+@keyframes compare-peek-back { 0%, 100% { translate: -50% 0; } 35% { translate: -25% 0; } 70% { translate: -75% 0; } }
 
 .more-link { margin-top: var(--s-5); font-weight: 500; }
 .more-link a { display: inline-flex; align-items: center; gap: var(--s-2); min-height: var(--target); }

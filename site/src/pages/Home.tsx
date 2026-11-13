@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Link } from '../router';
 import { CodeBlock, useReveal } from '../ui';
@@ -9,23 +9,46 @@ const INSTALL = 'claude plugin marketplace add PatriusCastro/prepon\nclaude plug
 const i = (n: number) => ({ '--i': n }) as CSSProperties;
 
 // Hero lens (canvas round 2, direction E): real detector rules flow along curves into the π lens and come out as the
-// fix Prepon applies. Each pair shares a delay, so a fix leaves exactly as its rule arrives. CSS only; the button
-// pauses it (WCAG 2.2.2). [rule, fix, path 1-3]
+// fix Prepon applies. Each pair shares a delay, so a fix leaves exactly as its rule arrives. CSS only, on
+// compositor-only properties so it stays smooth on slow phones; the button pauses it (WCAG 2.2.2). [rule, fix, path 1-3]
 const FLOW: [string, string, number][] = [
   ['purple-gradient', 'brand colour', 1], ['emoji-heading', 'plain task title', 2], ['tiny-target', '44 px targets', 3],
   ['card-spam', 'rows for records', 1], ['low-contrast-text', '6.5:1 text', 2], ['placeholder-label', 'visible labels', 3],
 ];
 
+// Mouse play, decorative (the stage is aria-hidden): the π looks toward the pointer anywhere in the hero, and resting
+// on a chip stops the flow so it can be read, lighting that rule and the fix it becomes.
+const look = (e: PointerEvent<HTMLElement>) => {
+  const ring = e.currentTarget.querySelector('.lens-ring');
+  if (e.pointerType !== 'mouse' || !ring) return;
+  const r = ring.getBoundingClientRect();
+  const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+  const d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / 400) / d;
+  e.currentTarget.style.setProperty('--lx', (dx * k).toFixed(3));
+  e.currentTarget.style.setProperty('--ly', (dy * k).toFixed(3));
+};
+const unlook = (e: PointerEvent<HTMLElement>) => { e.currentTarget.style.setProperty('--lx', '0'); e.currentTarget.style.setProperty('--ly', '0'); };
+
 function Lens() {
   const [paused, setPaused] = useState(false);
+  const [lit, setLit] = useState<number | null>(null);
+  // Off screen, the loop pauses (styles.css .is-off): an endless animation nobody sees still costs frames on a slow phone.
+  const [off, setOff] = useState(false);
+  const fig = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const io = new IntersectionObserver(([e]) => setOff(!e.isIntersecting));
+    if (fig.current) io.observe(fig.current);
+    return () => io.disconnect();
+  }, []);
   const chip = (text: string, kind: string, path: number, n: number) => (
-    <span key={kind + n} className={`lens-chip ${kind} p${path}${n > 2 ? ' is-extra' : ''}`} style={{ animationDelay: `${-n}s` }}>{text}</span>
+    <span key={kind + n} className={`lens-chip ${kind} p${path}${n > 2 ? ' is-extra' : ''}${lit === n ? ' is-lit' : ''}`} style={{ animationDelay: `${-n}s` }}
+      onPointerEnter={() => setLit(n)} onPointerLeave={() => setLit(null)}>{text}</span>
   );
   return (
     <>
-      <figure className={paused ? 'lens rise is-paused' : 'lens rise'} style={i(1)}>
+      <figure ref={fig} className={`lens rise${paused ? ' is-paused' : ''}${off ? ' is-off' : ''}`} style={i(1)}>
         <figcaption className="visually-hidden">Simulation: detector rules such as purple-gradient, emoji-heading and tiny-target flow into Prepon and come out as fixes: brand colour, a plain task title, 44 px targets.</figcaption>
-        <div className="lens-stage" aria-hidden="true">
+        <div className={lit === null ? 'lens-stage' : 'lens-stage has-lit'} aria-hidden="true">
           {FLOW.map(([rule, , p], n) => chip(rule, 'is-in', p, n))}
           {FLOW.map(([, fix, p], n) => chip(fix, 'is-out', p, n))}
           <div className="lens-ring"><i /><i /><span>π</span></div>
@@ -46,7 +69,7 @@ export function Home() {
   useReveal('.section > .wrap > :not(.toy), .toy > *');
   return (
     <>
-      <section className="hero" aria-labelledby="intro-h">
+      <section className="hero" aria-labelledby="intro-h" onPointerMove={look} onPointerLeave={unlook}>
         <div className="wrap hero-center">
           <div className="hero-copy rise" style={i(0)}>
             <p className="eyebrow"><span lang="grc">πρέπον</span> · what is fitting</p>
@@ -82,7 +105,7 @@ export function Home() {
         <div className="wrap">
           <div className="section-head">
             <h2 id="compare-h">The result fits its product</h2>
-            <p>One build run on the fleet dispatch demo: the vehicles that need attention now lead, not four equal KPI cards. Drag to compare.</p>
+            <p>One build run on the fleet dispatch demo: the vehicles that need attention now lead, not four equal KPI cards. Move the divider to compare.</p>
           </div>
           <Compare id="fleet" name="Fleet dispatch console" />
           <p className="more-link"><Link to="/gallery">All three before/after pairs <ArrowRight aria-hidden size={16} /></Link></p>

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { Link, usePath, href } from './router';
 import { Download } from 'lucide-react';
 import { DOCS } from './routes';
+import { CursorLens } from './ui';
 import { Home } from './pages/Home';
 import { DocsIndex, DocPage } from './pages/Docs';
 import { DemoIndex, Gallery, NotFound } from './pages/Placeholders';
@@ -87,6 +88,7 @@ function App() {
           <p>Design rationale: <code>site/README.md</code></p>
         </div>
       </footer>
+      <CursorLens />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
 import { Pause, Play, RotateCcw, SkipForward, Monitor, Smartphone, ChevronsLeftRight } from 'lucide-react';
 import detectSrc from '../../plugins/prepon/skills/prepon/scripts/detect-slop.js?raw';
 import { Link } from './router';
@@ -83,7 +83,7 @@ export function Session() {
         </div>
         {/* Focusable so keyboard users can scroll it; the lines are read as they appear in the DOM. */}
         <div className="term-body" ref={body} tabIndex={0} role="region" aria-labelledby="session-label"
-          onScroll={(e) => { const el = e.currentTarget; stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24; }}>
+          onScroll={(e) => { /* prepon-ignore scroll-listener: only notes whether the reader scrolled up; no layout writes */ const el = e.currentTarget; stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24; }}>
           {SESSION.map((l, i) => {
             const visible = i < shown;
             const typing = i === shown && l.kind === 'user' && typed > 0;
@@ -154,10 +154,13 @@ export function SlopToy({ head }: { head?: ReactNode }) {
   const [code, setCode] = useState(SLOP_SAMPLE);
   const [all, setAll] = useState(false);
   const [active, setActive] = useState(0);
+  // Lines of the finding under the mouse, lit in the editor so pointing at a finding shows the code it's about.
+  const [peek, setPeek] = useState<number[]>([]);
   const list = useRef<HTMLOListElement>(null);
   const area = useRef<HTMLTextAreaElement>(null);
   const mirror = useRef<HTMLPreElement>(null);
-  const findings = detect(code);
+  // Cached: hovering a finding re-renders this component, and re-running every rule on each hover cost frames on slow phones.
+  const findings = useMemo(() => detect(code), [code]);
   // One entry per rule, in order of its first line (findings are already sorted by line).
   const groups = [...findings.reduce((m, f) => {
     const g = m.get(f.rule) ?? { rule: f.rule, suggestion: f.suggestion, lines: [], matches: [], count: 0 };
@@ -201,7 +204,7 @@ export function SlopToy({ head }: { head?: ReactNode }) {
         <div className="toy-editor">
           <pre className="toy-mirror" ref={mirror} aria-hidden="true">
             {lines.map((l, n) => (
-              <div key={n} className={active === n + 1 ? 'is-flagged is-active' : flagged.has(n + 1) ? 'is-flagged' : undefined}>{l || ' '}</div>
+              <div key={n} className={[flagged.has(n + 1) && 'is-flagged', active === n + 1 && 'is-active', peek.includes(n + 1) && 'is-peek'].filter(Boolean).join(' ') || undefined}>{l || ' '}</div>
             ))}
           </pre>
           <textarea id="toy-code" className="toy-code" ref={area} value={code} onChange={(e) => { setCode(e.target.value); setActive(0); }}
@@ -219,7 +222,7 @@ export function SlopToy({ head }: { head?: ReactNode }) {
           <>
             <ol className="toy-findings" ref={list} tabIndex={-1} aria-label="Findings">
               {visible.map((g) => (
-                <li key={g.rule}>
+                <li key={g.rule} onPointerEnter={() => setPeek(g.lines)} onPointerLeave={() => setPeek([])}>
                   <p className="toy-head">
                     <code>{g.rule}</code>{g.count > 1 && <span className="toy-times">×{g.count}</span>}
                     {g.lines.map((l) => (
@@ -259,6 +262,7 @@ export function Compare({ id, name }: { id: string; name: string }) {
   const s = SIZES[size];
   const src = (phase: string) => `${import.meta.env.BASE_URL}gallery/${id}-${phase}@${size}.jpg`;
 
+  // A mouse moves the divider just by hovering; touch and pen still drag, so scrolling past never moves it.
   const fromPointer = (e: PointerEvent) => {
     const r = view.current!.getBoundingClientRect();
     setPos(Math.round(Math.min(100, Math.max(0, ((e.clientX - r.left) / r.width) * 100))));
@@ -275,9 +279,13 @@ export function Compare({ id, name }: { id: string; name: string }) {
         </div>
         <div ref={view} className="compare-view" style={{ '--pos': `${pos}%` } as CSSProperties}
           onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); fromPointer(e); }}
-          onPointerMove={(e) => { if (e.currentTarget.hasPointerCapture(e.pointerId)) fromPointer(e); }}>
+          onPointerMove={(e) => { if (e.pointerType === 'mouse' || e.currentTarget.hasPointerCapture(e.pointerId)) fromPointer(e); }}>
           <img src={src('before')} width={s.w} height={s.h} loading="lazy" draggable={false} alt={`Before: ${name}, first screen at ${size} px.`} />
-          <img src={src('after')} width={s.w} height={s.h} loading="lazy" draggable={false} alt={`After: ${name}, first screen at ${size} px.`} className="compare-after" />
+          {/* The clip box slides right by --pos while the image inside slides left by the same amount: the image stays
+              put and only the visible part changes, all with transforms, so the divider moves on the GPU. */}
+          <span className="compare-clip">
+            <img src={src('after')} width={s.w} height={s.h} loading="lazy" draggable={false} alt={`After: ${name}, first screen at ${size} px.`} className="compare-after" />
+          </span>
           <span className="compare-handle" aria-hidden="true"><ChevronsLeftRight size={18} /></span>
         </div>
       </div>
