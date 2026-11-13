@@ -170,6 +170,28 @@ Bottom borders for active tabs and input underlines are a different, conventiona
 **Tell.** Inputs whose only label is the placeholder.
 **Instead.** Use a visible label above the field, with helper text below for format hints. Placeholders vanish when typing begins, which is exactly when users with memory or attention difficulties need them.
 
+The next five are the current "premium dark" template: the look that replaced purple gradients once those became a known tell. Any one is fine on its own. Together they are the default.
+
+### sheen-edge
+**Tell.** A 1 px white inner shadow along the top of a card (`inset 0 1px 0 rgb(255 255 255 / 0.05)`), so every surface looks lit from above.
+**Instead.** Separate surfaces with one border or a tonal step from the project's tokens.
+
+### gradient-surface
+**Tell.** Cards filled with a vertical fade between two almost identical surfaces (`linear-gradient(180deg, var(--surface), var(--bg))`, `from-white/5`).
+**Instead.** Fill with one flat token. If the brand uses gradients, they have a meaning and a name in the tokens.
+
+### fading-hairline
+**Tell.** Dividers that fade out at both ends (`transparent, var(--line), transparent`, `from-transparent via-… to-transparent`).
+**Instead.** Use a plain 1 px border, or let space and a heading separate the sections.
+
+### hover-lift
+**Tell.** Cards and buttons that rise a few pixels on hover (`:hover { transform: translateY(-2px) }`, `hover:-translate-y-1`).
+**Instead.** Show hover with a color or border change (motion.md). Movement should answer something the user did, and hovering isn't a decision.
+
+### eyebrow-everywhere
+**Tell.** A small label, often mono or spaced capitals, over every heading on the page (three or more in one file).
+**Instead.** Let headings stand alone. Keep a label only where it carries real context: a step in a sequence, a category, a status.
+
 ---
 
 ## Judgment tells

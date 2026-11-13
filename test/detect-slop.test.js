@@ -40,11 +40,15 @@ const CLEAN = `export function Field({ id }) {
 
 const NEW_CSS = '.a{box-shadow: 6px 6px 0 #000} .g{background-image: linear-gradient(to right, #8881 1px, transparent 1px)} .h{background: radial-gradient(circle, rgba(99,102,241,0.3), transparent 70%)} .s{background: repeating-linear-gradient(45deg,#000 0 2px,#fff 2px 6px)} .t{letter-spacing:-0.05em} .e{transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)} @keyframes marquee{} @keyframes blink{} p{text-align: justify}';
 const NEW_TSX = '<h1 className="font-serif italic text-6xl">Hi</h1><span className="h-2 w-2 rounded-full bg-green-500 animate-pulse"/><p>Not just a tool. A platform for teams.</p><b>01</b><b>02</b><b>03</b><p>a — b — c — d — e — f</p>';
+const TEMPLATE_CSS = '.c{box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04); background: linear-gradient(180deg, var(--surface), var(--bg))} .l{background: linear-gradient(90deg, transparent, var(--line), transparent)} .c:hover{transform: translateY(-2px)}';
+const TEMPLATE_TSX = '<p className="eyebrow">a</p><h2>A</h2><p className="eyebrow">b</p><h2>B</h2><p className="text-xs uppercase tracking-widest">c</p>';
 const CARDS ='<Card><Card>inner</Card></Card>\n' + Array.from({ length: 6 }, () => '<div className="rounded-xl border p-4">x</div>').join('\n');
 
 test('every rule fires on the slop fixture or the css fixture', () => {
   const hits = new Set([
     ...run('Cards.tsx', CARDS),
+    ...run('t.css', TEMPLATE_CSS),
+    ...run('T.tsx', TEMPLATE_TSX),
     ...run('new.css', NEW_CSS),
     ...run('New.tsx', NEW_TSX),
     ...run('Hero.tsx', SLOP),
@@ -90,6 +94,19 @@ test('new rules stay quiet on the craft baseline', () => {
   assert.deepStrictEqual(run('ok.css', ok), []);
   assert.deepStrictEqual(run('Skel.tsx', '<div className="h-24 w-full rounded-full animate-pulse"/><ol><li>Step one</li></ol>'), []);
   assert.deepStrictEqual(run('Two.tsx', '<p>One — two — three.</p>'), []);
+});
+
+test('template rules: flag the premium-dark kit, leave plain borders, shadows and single labels alone', () => {
+  assert.deepStrictEqual(run('sheen.css', '.c{box-shadow: inset 0 1px 0 rgba(255,255,255,.06)}'), ['sheen-edge']);
+  assert.deepStrictEqual(run('Sheen.tsx', '<div className="shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]" />'), ['sheen-edge']);
+  assert.deepStrictEqual(run('grad.css', '.c{background: linear-gradient(to bottom, var(--card), var(--background))}'), ['gradient-surface']);
+  assert.deepStrictEqual(run('Grad.tsx', '<div className="bg-gradient-to-b from-white/5 to-transparent" />'), ['gradient-surface']);
+  assert.deepStrictEqual(run('Line.tsx', '<hr className="h-px bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />'), ['fading-hairline']);
+  assert.deepStrictEqual(run('lift.css', '.card { color: red }\n.card:hover, .card:focus { border-color: red; transform: translateY(-4px); }'), ['hover-lift']);
+  assert.deepStrictEqual(run('Lift.tsx', '<a className="hover:-translate-y-1">x</a>'), ['hover-lift']);
+  const ok = '.a{box-shadow: inset 0 1px 0 rgb(0 0 0 / .1), 0 1px 2px rgb(0 0 0/.05)} .b{background: linear-gradient(90deg, var(--accent), var(--accent-2))} .c{border-top: 1px solid var(--line)} .d:hover{background: var(--sunk)} .e{transform: translateY(-2px)} .f:hover{transform: translateX(2px)}';
+  assert.deepStrictEqual(run('ok.css', ok), []);
+  assert.deepStrictEqual(run('One.tsx', '<p className="eyebrow">Step 2 of 4</p><h1>Your business</h1><p className="eyebrow">Draft</p>'), []);
 });
 
 test('card rules: five cards is fine, six is spam, nesting always flagged', () => {

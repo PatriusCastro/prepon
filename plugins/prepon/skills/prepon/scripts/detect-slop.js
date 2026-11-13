@@ -241,6 +241,39 @@ const RULES = [
     unless: /aria-label|aria-labelledby|accessibilityLabel|\bid=|\blabel=|type=["'](?:hidden|search|submit|checkbox|radio)/,
     suggestion: 'Add a visible label (or label prop / accessibilityLabel); placeholders vanish while typing.',
   },
+  // The current "premium dark" template: surfaces that glint, lines that fade, cards that float on hover.
+  {
+    id: 'sheen-edge',
+    // A 1px white inner highlight along the top edge of a card, so it looks lit from above.
+    pattern: /inset\s+0(?:px)?\s+1px\s+0(?:px)?\s+(?:rgba?\(\s*255[\s,]+255[\s,]+255\b[^)]*\)|#fff(?:fff)?(?:[0-9a-f]{2})?\b|white\b)|\bshadow-\[inset_0_1px_0(?:_0)?_(?:rgba?\(255|#fff|white)/gi,
+    suggestion: 'Drop the inner highlight; separate surfaces with one border or a tonal step from your tokens.',
+  },
+  {
+    id: 'gradient-surface',
+    // A card filled with a vertical fade between two near-identical surfaces (or white at a few percent).
+    pattern: /linear-gradient\(\s*(?:180deg|to bottom)\s*,\s*(?:var\(--[\w-]*(?:surface|card|panel|elevated|bg|background)[\w-]*\)|rgba?\(\s*255[\s,]+255[\s,]+255[\s,/]+0?\.0\d+\s*\))\s*,\s*(?:var\(--[\w-]*(?:surface|card|panel|elevated|bg|background)[\w-]*\)|transparent)\s*\)|\bbg-(?:gradient|linear)-to-b\s+from-(?:white\/(?:[1-9]|10)|(?:zinc|neutral|slate|gray|stone)-(?:8|9)\d0)\b/g,
+    suggestion: 'Fill surfaces with one flat token; a gradient nobody can name is decoration.',
+  },
+  {
+    id: 'fading-hairline',
+    // A divider that fades out at both ends: transparent, a line color, transparent.
+    pattern: /linear-gradient\(\s*(?:to (?:right|left|bottom|top)|-?\d+deg)\s*,\s*transparent\b(?:[^()]|\([^()]*\))*?,\s*transparent\s*\)|\bfrom-transparent\s+via-[\w/[\]#.-]+\s+to-transparent\b/g,
+    suggestion: 'Use a plain 1px border, or let space and a heading separate the sections.',
+  },
+  {
+    id: 'hover-lift',
+    // Cards and buttons that rise on hover. Movement that says nothing about what a click will do.
+    pattern: /:hover[^{}]*\{[^}]*translateY\(\s*-\s*\d|\bhover:-translate-y-(?:\d|px|\[)|whileHover=\{\{[^}]*\by\s*:\s*-\d/g,
+    suggestion: 'Show hover with a color or border change; keep movement for responses to what the user did.',
+  },
+  {
+    id: 'eyebrow-everywhere',
+    exts: [...CODE, 'html'],
+    minCount: 3,
+    // A small label (often mono or spaced caps) over every heading on the page.
+    pattern: /\bclass(?:Name)?=["'`][^"'`]*(?:\b(?:eyebrow|kicker|overline)\b|\buppercase\b[^"'`]*\btracking-(?:wide|wider|widest|\[0?\.\d+em\])(?![\w-])|\btracking-(?:wide|wider|widest)\b[^"'`]*\buppercase\b)[^"'`]*["'`]/g,
+    suggestion: 'Let headings stand alone; keep a label only where it carries real context (a step, a category, a status).',
+  },
 ];
 
 const fs = require('fs');

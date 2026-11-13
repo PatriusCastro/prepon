@@ -496,9 +496,9 @@
   display: inline-flex; align-items: center; gap: var(--f-1); min-height: 1.5rem; padding: 0 var(--f-2) 0 0.3rem; color: var(--f-ink);
   font-size: var(--f-t-xs); font-weight: 600; background: var(--f-surface); border: 1px solid var(--f-line);
   border-radius: var(--f-r-pill); box-shadow: var(--f-shadow-raised);
-  transition: transform var(--f-fast) var(--f-ease-out);
+  transition: box-shadow var(--f-fast) var(--f-ease-out), border-color var(--f-fast);
 }
-.fleet .f-flag:hover { transform: translateY(-1px); }
+.fleet .f-flag:hover { border-color: var(--f-line-strong); box-shadow: var(--f-shadow-float); }
 .fleet .f-flag .f-icon { width: 1rem; height: 1rem; }
 .fleet .f-flag--critical { border-color: var(--f-crit-line); }
 .fleet .f-flag--critical .f-icon { color: var(--f-crit); }
