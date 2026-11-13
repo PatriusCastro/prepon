@@ -42,11 +42,15 @@ const NEW_CSS = '.a{box-shadow: 6px 6px 0 #000} .g{background-image: linear-grad
 const NEW_TSX = '<h1 className="font-serif italic text-6xl">Hi</h1><span className="h-2 w-2 rounded-full bg-green-500 animate-pulse"/><p>Not just a tool. A platform for teams.</p><b>01</b><b>02</b><b>03</b><p>a — b — c — d — e — f</p>';
 const TEMPLATE_CSS = '.c{box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04); background: linear-gradient(180deg, var(--surface), var(--bg))} .l{background: linear-gradient(90deg, transparent, var(--line), transparent)} .c:hover{transform: translateY(-2px)}';
 const TEMPLATE_TSX = '<p className="eyebrow">a</p><h2>A</h2><p className="eyebrow">b</p><h2>B</h2><p className="text-xs uppercase tracking-widest">c</p>';
+const PERF_CSS = '.p{transition: height 200ms, opacity 200ms} @keyframes glow{0%{box-shadow:0 0 4px red}100%{box-shadow:0 0 12px red}} .w1{will-change:transform}.w2{will-change:transform}.w3{will-change:opacity}.w4{will-change:transform}';
+const PERF_TSX = "window.addEventListener('scroll', onScroll);\nel.addEventListener('touchmove', (e) => { e.preventDefault(); });";
 const CARDS ='<Card><Card>inner</Card></Card>\n' + Array.from({ length: 6 }, () => '<div className="rounded-xl border p-4">x</div>').join('\n');
 
 test('every rule fires on the slop fixture or the css fixture', () => {
   const hits = new Set([
     ...run('Cards.tsx', CARDS),
+    ...run('perf.css', PERF_CSS),
+    ...run('Perf.tsx', PERF_TSX),
     ...run('t.css', TEMPLATE_CSS),
     ...run('T.tsx', TEMPLATE_TSX),
     ...run('new.css', NEW_CSS),
@@ -80,6 +84,17 @@ test('motion rules: short named transitions pass, slow ones do not', () => {
   assert.deepStrictEqual(run('ok.css', '.a{transition: transform 200ms ease-out, opacity 150ms}'), []);
   assert.deepStrictEqual(run('slow.css', '.a{transition: opacity 0.6s}'), ['slow-motion']);
   assert.deepStrictEqual(run('slow2.css', '.a{transition: transform 800ms}'), ['slow-motion']);
+  assert.deepStrictEqual(run('fast.css', '.a{transition: opacity .3s, transform 0.25s}'), []);
+});
+
+test('motion performance: layout, paint, layers and listeners flagged; compositor-only motion passes', () => {
+  assert.deepStrictEqual(run('a.css', '.p{transition: opacity 200ms, max-height .3s}'), ['layout-animation']);
+  assert.deepStrictEqual(run('b.css', '@keyframes grow{from{width:0}to{width:100%}}'), ['layout-animation']);
+  assert.deepStrictEqual(run('A.tsx', "<motion.div animate={{ height: 'auto', opacity: 1 }} /><div className=\"transition-[height]\" />"), ['layout-animation', 'layout-animation']);
+  assert.deepStrictEqual(run('c.css', '.g{transition: backdrop-filter 200ms}'), ['paint-animation']);
+  const ok = '.ok{transition: transform 200ms, opacity 200ms, border-width 100ms} @keyframes in{from{opacity:0;transform:translateY(8px);transform-origin: top left}} .x{will-change:transform} .y{animation: drift 8s linear infinite}';
+  assert.deepStrictEqual(run('ok.css', ok), []);
+  assert.deepStrictEqual(run('Ok.tsx', "el.addEventListener('touchstart', (e) => { go(e); }, { passive: true }); <motion.div animate={{ x: 0, opacity: 1 }} />"), []);
 });
 
 test('side-stripe: left/top stripes flagged, tab underline and hairlines are not', () => {

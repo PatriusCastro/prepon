@@ -192,6 +192,28 @@ The next five are the current "premium dark" template: the look that replaced pu
 **Tell.** A small label, often mono or spaced capitals, over every heading on the page (three or more in one file).
 **Instead.** Let headings stand alone. Keep a label only where it carries real context: a step in a sequence, a category, a status.
 
+**Motion performance.** The next five rules aren't about looks. They are the code patterns that make motion stutter on low-end phones, where the main thread is 4 to 6 times slower than a laptop's. Generated code reaches for them because they are the shortest way to write an animation. The detector finds them in source; `scripts/motion-perf.js` measures the result on a rendered page (motion.md, "Low-end devices").
+
+### layout-animation
+**Tell.** Animating size or position: `transition: height …`, `max-height` accordions, `@keyframes` that change `width`, `top`, `left` or margins, Framer's `animate={{ height: 'auto' }}`, Tailwind `transition-[height]`.
+**Instead.** Animate `transform` and `opacity`, which the compositor runs without the main thread. A progress bar is `transform: scaleX()`, a slide is `translate`, an expanding panel is `grid-template-rows: 0fr → 1fr` or a fade of content that is already laid out. Each frame of a layout animation re-runs layout for the page.
+
+### paint-animation
+**Tell.** Animating what has to be repainted: a looping `box-shadow` glow, an animated `blur()`, a `backdrop-filter` that transitions.
+**Instead.** Put the shadow or blur on a pseudo-element once and animate that element's `opacity`. The look is the same and the paint happens once, not every frame.
+
+### will-change-overuse
+**Tell.** `will-change` on four or more rules in one file, often added "for performance".
+**Instead.** Leave it off by default. Set it only on the few elements about to animate, ideally from code just before and removed after. Every `will-change` element holds its own GPU layer, and low-end phones run out of memory for them.
+
+### scroll-listener
+**Tell.** `addEventListener('scroll', …)`, `onScroll=` or `window.onscroll` driving visual effects: reveals, parallax, sticky headers that change, progress bars.
+**Instead.** Use `IntersectionObserver` for "is it in view yet" and CSS `animation-timeline: scroll()` or `view()` for motion tied to scroll; both run off the main thread or only when something changes. Keep a scroll handler only for cheap bookkeeping (no layout reads or writes), and suppress the finding with that reason.
+
+### blocking-touch-listener
+**Tell.** `wheel`, `touchstart` or `touchmove` listeners without `{ passive: true }`.
+**Instead.** Mark them passive so scrolling never waits for the handler. To stop the page scrolling under a gesture, use CSS `touch-action` or `overscroll-behavior`, not `preventDefault()`.
+
 ---
 
 ## Judgment tells

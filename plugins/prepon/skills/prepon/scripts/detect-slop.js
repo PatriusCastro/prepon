@@ -18,6 +18,10 @@
 
 const PURPLE_HEX = '#667eea|#764ba2|#8b5cf6|#7c3aed|#6d28d9|#6366f1|#4f46e5|#a855f7|#9333ea|#c026d3|#d946ef';
 const CODE = ['js', 'jsx', 'ts', 'tsx'];
+// One animation definition: a CSS transition list, a whole @keyframes block, a Tailwind transition-[…], or Framer's animate={{…}}.
+const MOTION_SPAN = /transition(?:-property)?\s*:[^;}\n]*|@keyframes\s+[\w-]+\s*\{(?:[^{}]|\{[^{}]*\})*\}|\btransition-\[[^\]]*\]|\banimate=\{\{[^}]*\}\}/g;
+const LAYOUT = 'width|height|max-height|max-width|min-height|min-width|top|left|right|bottom|inset|margin(?:-[a-z]+)?|padding(?:-[a-z]+)?';
+const LAYOUT_CAMEL = 'marginTop|marginBottom|marginLeft|marginRight|paddingTop|paddingBottom|maxHeight|maxWidth|minHeight';
 
 const RULES = [
   {
@@ -134,7 +138,7 @@ const RULES = [
   },
   {
     id: 'slow-motion',
-    pattern: /\bduration-(?:[5-9]\d\d|1\d{3})\b|transition(?:-duration)?\s*:[^;}\n]*?\b(?:[5-9]\d\d|\d{4,})ms\b|transition(?:-duration)?\s*:[^;}\n]*?\b(?:0?\.[5-9]|[1-9](?:\.\d+)?)s\b/g,
+    pattern: /\bduration-(?:[5-9]\d\d|1\d{3})\b|transition(?:-duration)?\s*:[^;}\n]*?\b(?:[5-9]\d\d|\d{4,})ms\b|transition(?:-duration)?\s*:[^;}\n]*?(?<![\d.])(?:0?\.[5-9]|[1-9](?:\.\d+)?)s\b/g,
     suggestion: 'Keep UI transitions to 100–300 ms (up to ~350 ms for sheets); exits faster than entrances.',
   },
   {
@@ -273,6 +277,41 @@ const RULES = [
     // A small label (often mono or spaced caps) over every heading on the page.
     pattern: /\bclass(?:Name)?=["'`][^"'`]*(?:\b(?:eyebrow|kicker|overline)\b|\buppercase\b[^"'`]*\btracking-(?:wide|wider|widest|\[0?\.\d+em\])(?![\w-])|\btracking-(?:wide|wider|widest)\b[^"'`]*\buppercase\b)[^"'`]*["'`]/g,
     suggestion: 'Let headings stand alone; keep a label only where it carries real context (a step, a category, a status).',
+  },
+  // Motion performance: what makes animation stutter on low-end phones. motion-perf.js measures it on a rendered page.
+  {
+    id: 'layout-animation',
+    pattern: MOTION_SPAN,
+    when: new RegExp(
+      String.raw`(?:^|[\s{;,])(?:${LAYOUT}|${LAYOUT_CAMEL})\s*:` +
+      String.raw`|^transition(?:-property)?\s*:(?:[^,]*,)*?\s*(?:${LAYOUT})(?=[\s,]|$)` +
+      String.raw`|^transition-\[(?:[^\]]*,)?(?:${LAYOUT})(?=[,\]])`),
+    suggestion: 'Animate transform and opacity: scaleX for bars, translate for slides, grid-template-rows 0fr→1fr for expanding. Size and position re-run layout every frame.',
+  },
+  {
+    id: 'paint-animation',
+    pattern: MOTION_SPAN,
+    when: /^@keyframes[\s\S]*?(?:box-shadow\s*:|blur\(|backdrop-filter\s*:)|^animate=[\s\S]*?(?:boxShadow\s*:|blur\(|backdropFilter\s*:)|^transition(?:-property)?\s*:(?:[^,]*,)*?\s*(?:-webkit-)?backdrop-filter(?=[\s,]|$)|^transition-\[[^\]]*backdrop-filter/,
+    suggestion: 'Fade a pseudo-element that already has the shadow or blur (animate its opacity) instead of animating the shadow or blur itself, which repaints every frame.',
+  },
+  {
+    id: 'will-change-overuse',
+    minCount: 4,
+    pattern: /will-change\s*:\s*(?!auto\b)[^;}\n]+|\bwill-change-(?:transform|scroll|contents|\[[^\]]+\])/g,
+    suggestion: 'Set will-change only on the few elements about to animate, ideally just before and removed after; each one holds a GPU layer that low-end phones run out of.',
+  },
+  {
+    id: 'scroll-listener',
+    exts: [...CODE, 'html'],
+    pattern: /addEventListener\(\s*['"`]scroll['"`]|\bonScroll\s*=|\bwindow\.onscroll\s*=/g,
+    suggestion: 'Use IntersectionObserver for "is it in view", or animation-timeline: scroll()/view() for scroll-linked motion; a scroll handler runs on the main thread every event.',
+  },
+  {
+    id: 'blocking-touch-listener',
+    exts: [...CODE, 'html'],
+    pattern: /addEventListener\(\s*['"`](?:wheel|mousewheel|touchstart|touchmove)['"`][\s\S]{0,300}/g,
+    unless: /passive\s*:\s*true/,
+    suggestion: 'Pass { passive: true } so scrolling never waits for the handler; to stop scrolling, use CSS touch-action or overscroll-behavior instead of preventDefault.',
   },
 ];
 

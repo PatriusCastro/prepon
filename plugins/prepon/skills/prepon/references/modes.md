@@ -22,12 +22,14 @@ Reviews existing UI and writes a report. It never edits source code. An audit pe
    - `node <scripts>/detect-slop.js <paths>` on the target's files.
    - `node <scripts>/check-page.js --base <url> --routes <target routes>` when a dev server is available. Its issues (overflow, clipped or covered text, hidden content, long lines, load errors) go into the findings with the evidence it prints.
    - `node <scripts>/tap-map.js --base <url> --routes <target routes> --primary "<selector>"` when a dev server is available. Read the blurred and tap-map images as described in hierarchy.md.
+   - `node <scripts>/motion-perf.js --base <url> --routes <target routes> --cpu 4` when a dev server is available and the target has motion. Add `--cpu 6` when its users are likely on budget phones: consumer apps in price-sensitive markets, field staff on company-issued devices. Its numbers go in the Motion on a slow phone section.
    - `node <scripts>/scan-consistency.js --summary <source dir>` on the whole product the target belongs to, not just the target. If a repo holds several separate products (consistency.md), scan only the one the target belongs to. Consistency is relative to the rest of the product, so the norm comes from everywhere and the findings are what departs from it inside the target.
 4. **Look at it if you can.** If a dev server and Playwright are available, capture the target with `snapshot.js --phase audit` (see before-after.md) and review the images too. Many layout and hierarchy issues only show up visually. If you couldn't look, say the audit is code-only.
 5. **Count the steps** for the target's top three tasks, as described under Interaction cost in ux-laws.md. Each avoidable step is a usability finding.
-6. **Review** against each area of the rubric below, the judgment tells in slop-patterns.md, and the behavior checklist in consistency.md: button states, action placement, forms, feedback, overlays, and wording, compared across the screens in scope.
+6. **Review** against each area of the rubric below, the judgment tells in slop-patterns.md, and the behavior checklist in consistency.md: button states, action placement, forms, feedback, overlays, and wording, compared across the screens in scope. Check motion against "How to check" and "Low-end devices" in motion.md. Motion that drops frames at `--cpu 4` in a core flow is a major finding.
+   Then list **opportunities**: things that work but would serve these users better, each tied to a principle. Most are motion: a press or state change with no feedback, a main-thread animation that could run on the compositor, a loop that runs off screen, an effect that drops frames only at `--cpu 6`. Opportunities never go in Findings and never change the score, so the audit stays a fair measure of what is wrong.
 7. **Write the report** to `docs/ui-audit-YYYY-MM-DD.md` in the working project. Create `docs/` if it's missing, and add `-2`, `-3` and so on if a report for today already exists. Use the template below.
-8. **Reply** with the score summary, the critical findings, and the file path.
+8. **Reply** with the score summary, the critical findings, how many opportunities there are, and the file path.
 
 ### Severity
 
@@ -96,17 +98,33 @@ Date: YYYY-MM-DD · Project type: <type> · Platform: <web / React Native> · Me
 
 <Then the behavior differences found, such as "Save" vs "Submit", or errors shown inline on one form and as a toast on another. Each one also gets a row in Findings.>
 
+## Motion on a slow phone
+
+| Route | CPU | Idle: fps, dropped | Scroll: fps, dropped | Main-thread or off-screen animations | Verdict |
+|---|---|---|---|---|---|
+| / | 4× | 58, 2% | 44, 23% | lens-flow: offsetDistance (12) | major: A6 |
+
+<From motion-perf.js. Say the throttling is an emulation, and whether a real device was used. Write "no motion to measure" or "no dev server" instead when that applies.>
+
 ## Prioritized fix list
 
 1. A1: <one line, the reason it comes first>
 2. …
+
+## Opportunities
+
+| ID | Location | Opportunity | Why (principle) | Effort | Risk |
+|---|---|---|---|---|---|
+| O1 | src/Hero.tsx:30 | Run the chip flow as translate keyframes instead of offset-path | motion.md, compositor-only properties: holds 60 fps at 4× | M | the curves need redrawing as keyframes |
+
+<Improvements, not defects: they don't affect the score. Fix applies them only when asked by ID.>
 
 ## Not checked
 
 <What couldn't be verified, such as screen reader behavior or real-device performance, and why.>
 ```
 
-Order findings by severity, then by how many users they affect. Number IDs A1, A2 and so on so the fix mode can refer to them.
+Order findings by severity, then by how many users they affect. Number IDs A1, A2 and so on, and opportunities O1, O2, so the fix mode can refer to them.
 
 ---
 
@@ -115,12 +133,12 @@ Order findings by severity, then by how many users they affect. Number IDs A1, A
 Applies fixes from an audit, in severity order.
 
 1. **Find the audit:** the most recent `docs/ui-audit-*.md`, unless the user names one. If there isn't one, offer to run an audit first. Fixing without one turns into an unreviewed redesign.
-2. **Scope:** use the findings the user asked for ("top three", "A1–A4", "all criticals"). If they didn't say, propose all criticals plus the majors that touch the same files, and confirm.
+2. **Scope:** use the findings the user asked for ("top three", "A1–A4", "all criticals"). If they didn't say, propose all criticals plus the majors that touch the same files, and confirm. Opportunities (O1, O2…) are applied only when the user names them ("O1–O3", "the motion opportunities"); never add them to the default proposal.
 3. **Capture the before state** (before-after.md).
-4. **Fix in severity order:** criticals first, then majors, then minors. Keep each fix as small as it can be while still addressing the cause. A contrast finding is fixed in the token, not by overriding one component. Consistency findings follow "Fixing inconsistencies" in consistency.md: fix the token or the shared component, then point the outliers at it. If a fix needs a design decision the audit didn't settle, such as which of two equally common values wins, ask.
-5. **Re-check:** run the detector on the changed files, re-run `scan-consistency.js` when you fixed consistency findings, and re-check each fixed finding against its rule.
+4. **Fix in severity order:** criticals first, then majors, then minors. Keep each fix as small as it can be while still addressing the cause. A contrast finding is fixed in the token, not by overriding one component. Consistency findings follow "Fixing inconsistencies" in consistency.md: fix the token or the shared component, then point the outliers at it. If a fix needs a design decision the audit didn't settle, such as which of two equally common values wins, ask. Named opportunities come after the findings, held to the same rule: the smallest change that delivers it.
+5. **Re-check:** run the detector on the changed files, re-run `scan-consistency.js` when you fixed consistency findings, and re-check each fixed finding against its rule. When you changed motion, re-run `motion-perf.js` with the same routes and `--cpu` as the audit and compare the numbers.
 6. **Capture the after state** and publish the comparison.
-7. **Update the report.** Append a "Fixes applied (YYYY-MM-DD)" section to the audit file listing each finding ID, what was done, and whether it was verified visually or in code only.
+7. **Update the report.** Append a "Fixes applied (YYYY-MM-DD)" section to the audit file listing each finding and opportunity ID, what was done, whether it was verified visually or in code only, and the before and after motion-perf numbers for motion changes.
 8. **Reply** with the change summary table (What changed / Before / After / Principle or reason) and the comparison link.
 
 ---

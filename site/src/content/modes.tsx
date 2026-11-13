@@ -79,7 +79,9 @@ export const modeDocs: Record<string, ReactNode> = {
         <li><strong>Read the references:</strong> the matching project type, UX laws, accessibility, slop patterns, and responsive or mobile depending on the platform.</li>
         <li><strong>Run the detector</strong> on the target’s files and confirm each finding in context before reporting it.</li>
         <li><strong>Look at it, if possible.</strong> With a dev server and Playwright available, it captures screenshots and reviews them too, since many hierarchy problems only show up visually. Otherwise the report says it was code-only.</li>
-        <li><strong>Review</strong> against each area of the rubric and the judgment tells.</li>
+        <li><strong>Measure motion on a slow phone.</strong> When the target animates, <code>motion-perf.js</code> replays it with the CPU slowed four times (six for products used on budget phones) and records every frame: dropped and long frames, animations the GPU can’t run on its own, loops running off screen.</li>
+        <li><strong>Review</strong> against each area of the rubric and the judgment tells. Motion that drops frames in a core flow is a major finding.</li>
+        <li><strong>List opportunities:</strong> things that work but would serve your users better, most often motion that could run on the GPU or feedback that’s missing. They’re numbered O1, O2 and kept out of the score, so the score still measures only what’s wrong.</li>
         <li><strong>Write the report</strong> to <code>docs/ui-audit-YYYY-MM-DD.md</code> in your project, adding <code>-2</code>, <code>-3</code> if one exists for today.</li>
         <li><strong>Reply</strong> with the scores, the critical findings, and the file path.</li>
       </ol>
@@ -103,7 +105,7 @@ export const modeDocs: Record<string, ReactNode> = {
       <p>Consistency is scored against the whole product, not the target alone. If the target is the only screen, it’s scored on internal consistency and the reason says so.</p>
 
       <h2>The report</h2>
-      <p>A summary of what the screen is for and the most important problem, the score table, a findings table (ID, severity, file and line, finding, principle or rule, suggested fix), a prioritized fix list, and a “Not checked” section for what couldn’t be verified. Findings are numbered A1, A2, and so on so that <Link to="/docs/fix">fix</Link> can refer to them.</p>
+      <p>A summary of what the screen is for and the most important problem, the score table, a findings table (ID, severity, file and line, finding, principle or rule, suggested fix), a “Motion on a slow phone” table with the frame numbers, a prioritized fix list, the opportunities, and a “Not checked” section for what couldn’t be verified. Findings are numbered A1, A2, and opportunities O1, O2, so that <Link to="/docs/fix">fix</Link> can refer to them.</p>
     </>
   ),
 
@@ -114,12 +116,12 @@ export const modeDocs: Record<string, ReactNode> = {
       <h2>Steps</h2>
       <ol>
         <li><strong>Find the audit:</strong> the latest <code>docs/ui-audit-*.md</code>, unless you name one.</li>
-        <li><strong>Scope:</strong> the findings you asked for (“top three”, “A1–A4”, “all criticals”). If you didn’t say, it proposes all criticals plus the majors in the same files, and confirms.</li>
+        <li><strong>Scope:</strong> the findings you asked for (“top three”, “A1–A4”, “all criticals”). If you didn’t say, it proposes all criticals plus the majors in the same files, and confirms. Opportunities are applied only when you name them: <code>fix O1-O3</code>.</li>
         <li><strong>Capture the before state.</strong></li>
         <li><strong>Fix in severity order,</strong> each fix as small as it can be while still addressing the cause. A contrast problem gets fixed in the token, not by overriding one component. If a fix needs a design decision the audit didn’t settle, it asks.</li>
-        <li><strong>Re-check:</strong> run the detector on the changed files and verify each fixed finding against its rule.</li>
+        <li><strong>Re-check:</strong> run the detector on the changed files and verify each fixed finding against its rule. For motion changes, re-run the slow-phone measurement with the audit’s settings and compare.</li>
         <li><strong>Capture the after state</strong> and publish the comparison.</li>
-        <li><strong>Update the report</strong> with a “Fixes applied” section listing each finding ID, what was done, and whether it was verified visually or only in code.</li>
+        <li><strong>Update the report</strong> with a “Fixes applied” section listing each finding and opportunity ID, what was done, whether it was verified visually or only in code, and the frame numbers before and after for motion changes.</li>
         <li><strong>Reply</strong> with the change summary table and the comparison link.</li>
       </ol>
       <h2>The change summary table</h2>

@@ -6,7 +6,15 @@ All notable changes to this project are documented here. Versions follow [Semant
 
 ### Added
 - Interaction cost rule in `ux-laws.md`: count the steps on the top tasks and cut them, keeping protective steps. Audits now include a Task steps table, and build reports the main task's step count (before → after) and checks it in the self-review checklist.
+- `motion-perf.js`: measures motion on a slow phone. Loads routes at 360 px with the CPU throttled (`--cpu 4` or `6`), traces idle and a scroll and counts the frames the compositor dropped, and reports `dropped-frames`, `long-frame` (with the scripts blamed), `main-thread-animation`, `offscreen-animation`, and `heavy-layer`. Audit, fix, and build run it when motion is involved.
+- Opportunities in audits: improvements that aren't defects (most often motion that could run on the compositor, or feedback that's missing) are listed as O1, O2… in their own section, without changing the score. `fix` applies them only when they're named. Audits also gain a "Motion on a slow phone" table.
+- "Low-end devices" section in `motion.md`: compositor-only properties and their equivalents, stopping off-screen loops, layer memory, scroll and touch listeners, JavaScript-driven motion, and degrading rather than removing effects.
+- `offscreen-animation` also covers endless animations inside an invisible parent.
+- Five motion-performance rules in `detect-slop.js` (47 rules now): `layout-animation`, `paint-animation`, `will-change-overuse`, `scroll-listener`, and `blocking-touch-listener`.
 - Predicted attention order in `tap-map.js`: ranks what's on the first screen by likely first look (size, contrast, position, isolated colour), saves a numbered `-attention` image, reports `primaryRank`, and flags `primary-not-salient` when the primary action isn't in the first three. Labelled as a prediction; real analytics heatmaps win.
+
+### Fixed
+- `slow-motion` no longer reads `.3s` as 3 s.
 
 ## [0.1.0] - 2026-11-12
 

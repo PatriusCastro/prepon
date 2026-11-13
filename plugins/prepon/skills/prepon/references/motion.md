@@ -53,10 +53,30 @@ The "skip" list above is for product UI, where people come to do a task. Landing
 
 In audits and slop scans of marketing pages, suppress `scroll-reveal` and `decorative-motion` findings that meet these guardrails, giving the reason, and treat everything else as usual.
 
+## Low-end devices
+
+Most users aren't on the laptop the UI was built on. A budget Android phone runs JavaScript, style and layout four to six times slower, so motion that is smooth in development stutters there, and stutter reads as "broken", not "slow". The fix is almost never less motion. It is motion the phone's compositor can run on its own.
+
+- **Compositor-only properties.** `transform`, `opacity` (and the individual `translate`, `scale`, `rotate`) and `filter` without blur animate on the GPU even while the main thread is busy. Everything else (size, position, margins, colors, shadows, `offset-distance`, CSS custom properties) needs the main thread for every frame. The detector flags the common cases (`layout-animation`, `paint-animation`); `motion-perf.js` lists every running animation that isn't compositor-only.
+- **Equivalents.** Width → `scaleX` with `transform-origin`. Top/left → `translate`. Height for an accordion → `grid-template-rows: 0fr → 1fr`, or animate the content's opacity and translate. A glow → a pseudo-element with the shadow, fading in. A motion path (`offset-path`) → `translate` keyframes along the same curve, or accept it as main-thread work and keep it to a few elements.
+- **Stop what nobody sees.** An endless animation keeps costing frames after it scrolls off screen. Pause loops outside the viewport (`IntersectionObserver` toggling `animation-play-state`, or `content-visibility: auto` on the section) and in background tabs.
+- **Layers are memory.** `will-change` and `backdrop-filter` each create a GPU layer. A few are fine; dozens, or a blur over most of the screen, exhaust a cheap phone's GPU memory and everything stutters.
+- **Scroll and touch.** Scroll-linked effects belong in `IntersectionObserver` or `animation-timeline`, not scroll handlers. Wheel and touch listeners are passive.
+- **JavaScript animation.** Prefer CSS or the Web Animations API. When JS must drive motion (a cursor follower, physics), write styles directly from a `requestAnimationFrame` loop that stops when it arrives, never through framework state on every frame, and never read layout (`getBoundingClientRect`, `offsetWidth`) after writing styles in the same frame.
+- **Degrade, don't remove.** If a showcase effect still can't hold its frame rate at 6× slowdown, give it a simpler version (fewer moving elements, no blur) rather than dropping it for everyone. `prefers-reduced-motion` is about comfort, not device speed, so don't use it as the low-end switch.
+
+**Measure it.** With a dev server running:
+
+```sh
+node <scripts>/motion-perf.js --base http://localhost:5173 --routes /,/dashboard --cpu 4   # mid-range phone; --cpu 6 for low-end
+```
+
+It loads each route at phone size with the CPU slowed, lets loading finish, then traces 3 s of idle and a scroll through the page. Frames come from the browser's own frame reporting, so motion the GPU runs is judged by what reaches the screen. It reports `dropped-frames` (over 10% of frames late), `long-frame` (a frame over 100 ms, with the scripts the browser blames), `main-thread-animation`, `offscreen-animation`, and `heavy-layer`. Run it before and after a motion change, and quote both sets of numbers. The throttling is an emulation: the numbers are comparable between runs on one machine, not a promise about a specific phone. Say so, and test on a real low-end device when one is available.
+
 ## How to check
 
 - Every interactive element visibly responds to a press within about 100 ms (Doherty threshold).
 - Every state change that's easy to miss (an item added, a panel opened, an error appearing) has a brief transition or highlight.
 - Durations in the code are under about 400 ms, use the motion tokens, and animate only transform and opacity.
 - Turn on reduced motion (OS setting, or the DevTools rendering emulation) and confirm movement stops or becomes a fade.
-- Throttle the CPU 4× in DevTools, or use a mid-range Android device, and check that nothing stutters.
+- Run `motion-perf.js` at `--cpu 4` (and `--cpu 6` for products used on budget phones), or throttle the CPU in DevTools, and check that nothing stutters: no dropped-frames or long-frame issues, and every main-thread animation either fixed or justified ("Low-end devices" above).

@@ -127,6 +127,16 @@ Delete the file to turn it off. Claude Code asks you to approve plugin hooks bef
 node plugins/prepon/skills/prepon/scripts/check-page.js --base http://localhost:5173 --routes /,/settings [--reduced-motion]
 ```
 
+## The motion check
+
+`plugins/prepon/skills/prepon/scripts/motion-perf.js` measures whether a page's motion stays smooth on a slow phone. It loads each route at 360 px with the CPU slowed (`--cpu 4` is roughly a mid-range phone, `--cpu 6` a low-end one), traces 3 s of idle and a scroll through the page, and reports frames the browser dropped (from its own frame reporting, not a JavaScript frame counter, which would add the very main-thread work it measures), frames over 100 ms (with the scripts the browser blames), animations the compositor can't run on its own, endless animations running off screen, and large blur or will-change layers. Chromium only; the throttling is an emulation, so compare runs on one machine rather than treating the numbers as a specific phone's.
+
+```sh
+node plugins/prepon/skills/prepon/scripts/motion-perf.js --base http://localhost:5173 --routes /,/settings --cpu 4
+```
+
+Audit runs it on targets with motion and lists what it finds as findings (frames dropped in a core flow) or opportunities (O1, O2…: improvements that don't change the score). `fix O1-O3` applies named opportunities and re-runs it to show the before and after numbers. Build runs it when a change adds motion.
+
 ## The consistency scanner
 
 `plugins/prepon/skills/prepon/scripts/scan-consistency.js` lists every radius, border width and color, background, text color, shadow, font size and weight the project uses, with counts and locations. It flags the outliers against the project's own norm. It also groups buttons by style, lists buttons missing states that most others have (hover, focus-visible, disabled, pressed), and finds raw `<button>` elements that bypass an existing `Button` component. Token references (`var(--x)`) are never flagged. When tokens are the norm, raw literals are.
@@ -165,6 +175,7 @@ plugins/prepon/skills/prepon/
   scripts/tap-map.js                 phone tap map, thumb zones, and blurred squint test
   scripts/snapshot.js                before/after screenshots using the project's Playwright
   scripts/check-page.js              rendered-page checks: overflow, clipped or covered text, hidden content, long lines, load errors
+  scripts/motion-perf.js             motion on a slow phone: dropped and long frames, main-thread and off-screen animations
   scripts/hook-slop.js               optional hook: slop check after each UI edit (opt in per project)
 plugins/prepon/hooks/hooks.json      wires the optional hook
 test/                                self-tests for the scripts (not shipped in the plugin)
