@@ -1,0 +1,14 @@
+{
+  "name": "prepon",
+  "owner": { "name": "Pat Castro" },
+  "description": "Prepon: fitting, project-aware frontend design and review for Claude Code.",
+  "plugins": [
+    {
+      "name": "prepon",
+      "source": "./plugins/prepon",
+      "description": "Builds and reviews UI that fits the project and its users, cites UX principles, and catches generic AI-styled interfaces.",
+      "version": "0.1.0",
+      "category": "design"
+    }
+  ]
+}

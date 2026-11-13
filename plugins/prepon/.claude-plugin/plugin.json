@@ -1,0 +1,8 @@
+{
+  "name": "prepon",
+  "version": "0.1.0",
+  "description": "Builds and reviews UI that fits the project and its users, cites UX principles, and catches generic AI-styled interfaces.",
+  "author": { "name": "Pat Castro" },
+  "repository": "https://github.com/PatriusCastro/prepon",
+  "keywords": ["design", "ux", "frontend", "accessibility", "react", "react-native", "audit"]
+}

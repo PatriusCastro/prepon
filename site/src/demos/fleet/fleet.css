@@ -1,0 +1,776 @@
+/* Larkmoor Freight dispatch demo. Every rule is scoped under .fleet so the showcase site's look is untouched
+   (the exceptions are the scroll padding rules on :root, which only apply while the fleet top bar or tab bar is on screen).
+   Tokens first. Contrast (WCAG formula): ink 16.7:1 on surface, muted 7.5 on surface / 6.8 on bg / 6.4 on sunk,
+   line-strong 3.5 on surface / 3.2 on bg (control boundaries), brand 10.0 on surface / 8.4 on brand-tint,
+   on-brand 8.9 on brand, crit 5.6 on its tint / 6.5 on surface, warn 5.7 on its tint / 6.4 on surface,
+   demo-soft 8.4 on demo, on-brand 15.4 on ink (toast).
+   The dashboard also has a dark theme that follows the system setting, for night shifts; the sign-in stays light.
+   Dark contrast: ink 13.5 on surface, muted 7.4 on surface / 6.4 on sunk, line-strong 3.8 on surface,
+   brand 8.7 on surface / 6.5 on brand-tint, on-brand 8.1 on brand, crit 6.7 on its tint, warn 7.8 on its tint. */
+
+.fleet {
+  /* Neutrals: warm stone, tinted slightly toward moor green. */
+  --f-bg: #f4f5f1;
+  --f-surface: #ffffff;
+  --f-sunk: #eceee8;
+  --f-ink: #1a1f1c;
+  --f-muted: #4f5752;
+  --f-line: #e0e3dc;          /* resting borders and pane dividers */
+  --f-line-mid: #c9cdc6;      /* hover borders, sheet grabber */
+  --f-line-strong: #858b86;   /* control boundaries, 3:1 */
+  /* Moor green: logo, primary action, selection, links, focus, the shift line. Nothing else. */
+  --f-brand: #1f4a3d;
+  --f-brand-hover: #173a30;
+  --f-brand-tint: #e4eee9;
+  --f-on-brand: #f3f2ee;
+  /* Signal colors: soft tints with darker text, kept for real exceptions only. */
+  --f-crit: #b3261e;
+  --f-crit-bg: #fbeae8;
+  --f-crit-line: #f0c8c3;
+  --f-warn: #855400;
+  --f-warn-bg: #fcf0d6;
+  --f-warn-line: #ecd59f;
+  --f-demo: #2b2f2d;
+  --f-demo-raised: #3b403d;
+  --f-demo-soft: #c9cdc6;
+  --f-scrim: rgb(26 31 28 / 0.45);
+
+  --f-shadow-rest: 0 1px 2px rgb(26 31 28 / 0.05);
+  --f-shadow-raised: 0 1px 3px rgb(26 31 28 / 0.16), 0 1px 1px rgb(26 31 28 / 0.06);
+  --f-shadow-float: 0 16px 40px rgb(26 31 28 / 0.18), 0 2px 8px rgb(26 31 28 / 0.08);
+  --f-ring-surface: 0 0 0 2px var(--f-surface);
+  --f-shadow-dot: var(--f-ring-surface), 0 1px 3px rgb(26 31 28 / 0.35);
+  --f-halo-live: 0 0 0 3px var(--f-brand-tint);
+  --f-ring-error: inset 0 0 0 1px var(--f-crit);
+
+  /* IBM Plex Sans: an engineered grotesk with tabular figures, so plates, unit IDs, and times line up and scan. */
+  --f-font: 'IBM Plex Sans', system-ui, sans-serif;
+  --f-t-xs: 0.75rem;   /* 12: incidental meta only */
+  --f-t-sm: 0.875rem;  /* 14: labels, table, rows */
+  --f-t-md: 1rem;      /* 16: body, inputs */
+  --f-t-lg: 1.125rem;  /* 18: section headings, the depot name */
+  --f-t-xl: clamp(1.5rem, 1.3rem + 1vw, 1.75rem);     /* tally numbers */
+  --f-t-2xl: clamp(1.875rem, 1.5rem + 1.5vw, 2.5rem); /* sign-in heading */
+  --f-t-3xl: clamp(2.75rem, 2.2rem + 2vw, 3.5rem);    /* the open-exceptions count: the one number that leads */
+
+  --f-1: 0.25rem; --f-2: 0.5rem; --f-3: 0.75rem; --f-4: 1rem; --f-5: 1.5rem; --f-6: 2rem; --f-7: 3rem;
+  /* Radius by role. */
+  --f-r-control: 8px; --f-r-card: 12px; --f-r-dialog: 12px; --f-r-sheet: 16px; --f-r-pill: 999px;
+  --f-target: 2.75rem; /* 44px on touch; 40px with a mouse on wide screens */
+  --f-top-h: 3.5rem;
+
+  /* Motion: short, transform and opacity only. Exits are about two thirds of entrances. */
+  --f-fast: 120ms; --f-base: 200ms; --f-sheet: 300ms; --f-exit: 200ms;
+  --f-ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --f-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --f-sheet-from: translateY(100%);
+
+  color-scheme: light;
+  min-height: 100vh;
+  background: var(--f-bg);
+  color: var(--f-ink);
+  font: var(--f-t-md)/1.5 var(--f-font);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dark theme for the dashboard only: the same warm, moor-tinted neutrals, darkened; the brand green lightens so it
+   still reads as the one action color. Shadows go darker because borders now carry most of the depth. */
+@media (prefers-color-scheme: dark) {
+  .fleet.f-app {
+    --f-bg: #121614;
+    --f-surface: #1b201d;
+    --f-sunk: #252b27;
+    --f-ink: #e6e9e4;
+    --f-muted: #a7afa9;
+    --f-line: #2c332f;
+    --f-line-mid: #3b433e;
+    --f-line-strong: #737c76;
+    --f-brand: #8cc9ae;
+    --f-brand-hover: #a6d7c1;
+    --f-brand-tint: #1f3a30;
+    --f-on-brand: #0f2a20;
+    --f-crit: #ff8f84;
+    --f-crit-bg: #3d1f1c;
+    --f-crit-line: #6e302a;
+    --f-warn: #efb75a;
+    --f-warn-bg: #352a13;
+    --f-warn-line: #67501f;
+    --f-scrim: rgb(0 0 0 / 0.6);
+    --f-shadow-rest: 0 1px 2px rgb(0 0 0 / 0.3);
+    --f-shadow-raised: 0 1px 3px rgb(0 0 0 / 0.5), 0 1px 1px rgb(0 0 0 / 0.3);
+    --f-shadow-float: 0 16px 40px rgb(0 0 0 / 0.55), 0 2px 8px rgb(0 0 0 / 0.35);
+    color-scheme: dark;
+  }
+  /* The demo bar is already dark in both themes; keep its light text. */
+  .fleet.f-app .f-demobar { --f-on-brand: #f3f2ee; }
+}
+
+/* Reset the site's element styles inside the demo. */
+.fleet h1, .fleet h2, .fleet h3 { font-family: var(--f-font); font-weight: 600; line-height: 1.25; letter-spacing: 0; margin: 0; }
+.fleet h1 { font-size: var(--f-t-lg); }
+.fleet h2 { font-size: var(--f-t-lg); }
+.fleet p { margin: 0; }
+.fleet ul { list-style: none; padding: 0; margin: 0; }
+.fleet li { margin: 0; }
+.fleet a { color: var(--f-brand); text-underline-offset: 0.18em; }
+.fleet :focus-visible { outline: 2px solid var(--f-brand); outline-offset: 2px; }
+.fleet .f-demobar :focus-visible { outline-color: var(--f-on-brand); }
+/* Headings get programmatic focus on navigation and from the bell, the tally, and the detail so screen readers
+   announce them; they aren't controls. Same as the permit demo. */
+/* prepon-ignore outline-removed */
+.fleet h1[tabindex='-1']:focus, .fleet h2[tabindex='-1']:focus { outline: none; }
+
+.fleet .f-icon { width: 1.15em; height: 1.15em; flex: none; }
+.fleet .f-crit { color: var(--f-crit); }
+.fleet .f-warn { color: var(--f-warn); }
+
+/* Demo bar: says what this is, outside the product's own chrome. */
+.fleet .f-demobar { background: var(--f-demo); color: var(--f-on-brand); font-size: var(--f-t-sm); }
+.fleet .f-demobar-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--f-2) var(--f-4); padding: var(--f-2) var(--f-4); }
+.fleet .f-demobar p { flex: 1 1 18rem; display: flex; gap: var(--f-2); align-items: flex-start; }
+.fleet .f-demobar p .f-icon { margin-top: 0.15em; color: var(--f-demo-soft); }
+.fleet .f-demobar-back {
+  display: inline-flex; align-items: center; gap: var(--f-2); min-height: var(--f-target); padding-inline: var(--f-3);
+  color: var(--f-on-brand); text-decoration: none; font-weight: 500; border-radius: var(--f-r-control);
+  transition: background-color var(--f-fast) var(--f-ease-out);
+}
+.fleet .f-demobar-back:hover { background: var(--f-demo-raised); }
+.fleet .f-demo-state { display: inline-flex; align-items: center; gap: var(--f-2); color: var(--f-demo-soft); }
+.fleet .f-demo-state select { background-color: var(--f-demo-raised); color: var(--f-on-brand); border-color: var(--f-demo-soft); }
+
+/* Native selects, styled */
+.fleet select {
+  min-height: var(--f-target); font: inherit; font-size: var(--f-t-sm); padding: 0 var(--f-6) 0 var(--f-3);
+  color: var(--f-ink); background: var(--f-surface); border: 1px solid var(--f-line-strong); border-radius: var(--f-r-control);
+  appearance: none; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 1rem center, right calc(1rem - 5px) center;
+  background-size: 5px 5px; background-repeat: no-repeat;
+}
+
+/* Wordmark: brand-green tile, sentence-case name. */
+.fleet .f-wordmark { display: inline-flex; align-items: center; gap: var(--f-3); min-width: 0; }
+.fleet .f-logo {
+  display: grid; place-items: center; width: 2.25rem; height: 2.25rem; flex: none;
+  background: var(--f-brand); color: var(--f-on-brand); border-radius: var(--f-r-control);
+}
+.fleet .f-logo svg { width: 1.25rem; height: 1.25rem; }
+.fleet .f-wordmark-text { display: grid; line-height: 1.2; min-width: 0; }
+.fleet .f-wordmark-name { font-size: var(--f-t-sm); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fleet .f-wordmark-product { font-size: var(--f-t-xs); color: var(--f-muted); }
+
+/* The shift line: the board's signature. Start to end of the shift, filled to now, with the time left beside it. */
+.fleet .f-shift { display: grid; gap: var(--f-2); }
+.fleet .f-shift-text { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--f-1) var(--f-3); font-size: var(--f-t-sm); color: var(--f-muted); }
+.fleet .f-shift-text > span { display: inline-flex; align-items: center; gap: var(--f-2); }
+.fleet .f-shift-left { color: var(--f-ink); font-weight: 500; }
+.fleet .f-shift-bar { position: relative; display: block; height: 6px; overflow: hidden; border-radius: var(--f-r-pill); background: var(--f-sunk); }
+.fleet .f-shift-bar::before {
+  content: ''; position: absolute; inset: 0; background: var(--f-brand);
+  transform: scaleX(var(--f-done)); transform-origin: left;
+}
+
+/* Top bar: the one piece of chrome. Brand, main navigation from tablet width, the alert bell, and the account menu. */
+.fleet .f-top {
+  display: flex; align-items: center; gap: var(--f-2); min-height: var(--f-top-h); padding: 0 var(--f-4);
+  background: var(--f-surface); border-bottom: 1px solid var(--f-line);
+}
+.fleet .f-top > .f-wordmark { flex: 0 1 auto; margin-right: auto; }
+.fleet .f-bell { position: relative; color: var(--f-muted); }
+.fleet .f-bell-n {
+  position: absolute; top: 0.25rem; right: 0.125rem; min-width: 1.125rem; height: 1.125rem; padding: 0 var(--f-1);
+  display: grid; place-items: center; border-radius: var(--f-r-pill); box-shadow: var(--f-ring-surface);
+  background: var(--f-crit); color: var(--f-surface); font-size: var(--f-t-xs); font-weight: 600; line-height: 1;
+}
+
+/* Account menu */
+.fleet .f-menu { position: relative; }
+.fleet .f-menu summary {
+  display: flex; align-items: center; gap: var(--f-2); min-height: var(--f-target); padding: 0 var(--f-2) 0 var(--f-1);
+  list-style: none; cursor: pointer; border-radius: var(--f-r-pill); font-size: var(--f-t-sm); font-weight: 500;
+  transition: background-color var(--f-fast) var(--f-ease-out);
+}
+.fleet .f-menu summary::-webkit-details-marker { display: none; }
+.fleet .f-menu summary:hover, .fleet .f-menu[open] summary { background: var(--f-sunk); }
+.fleet .f-menu-chev { color: var(--f-muted); transition: transform var(--f-base) var(--f-ease-out); }
+.fleet .f-menu[open] .f-menu-chev { transform: rotate(180deg); }
+.fleet .f-menu-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.fleet .f-menu-pop {
+  position: absolute; right: 0; top: calc(100% + var(--f-2)); z-index: 30; min-width: 15rem; padding: var(--f-2);
+  background: var(--f-surface); color: var(--f-ink); border: 1px solid var(--f-line); border-radius: var(--f-r-card);
+  box-shadow: var(--f-shadow-float); animation: f-pop var(--f-base) var(--f-ease-out);
+}
+.fleet .f-menu-who { display: grid; padding: var(--f-2) var(--f-3) var(--f-3); border-bottom: 1px solid var(--f-line); margin-bottom: var(--f-1); }
+.fleet .f-menu-who span { font-size: var(--f-t-sm); color: var(--f-muted); }
+.fleet .f-menu-item {
+  display: flex; align-items: center; gap: var(--f-2); min-height: var(--f-target); padding-inline: var(--f-3);
+  color: var(--f-ink); text-decoration: none; font-weight: 500; border-radius: var(--f-r-control);
+  transition: background-color var(--f-fast) var(--f-ease-out);
+}
+.fleet .f-menu-item:hover { background: var(--f-sunk); }
+
+.fleet .f-avatar {
+  display: inline-grid; place-items: center; width: 2rem; height: 2rem; flex: none; border-radius: var(--f-r-pill);
+  background: var(--f-brand-tint); color: var(--f-brand); font-size: var(--f-t-xs); font-weight: 600; letter-spacing: 0.02em;
+}
+
+/* Main navigation: tabs in the top bar from 768px (icons only until 1024px), a bottom tab bar on phones. */
+.fleet .f-topnav { display: none; }
+.fleet .f-nav-item {
+  display: flex; align-items: center; gap: var(--f-2); min-height: var(--f-target); padding-inline: var(--f-3);
+  font: inherit; font-size: var(--f-t-sm); font-weight: 500; color: var(--f-muted); text-decoration: none; text-align: left;
+  background: transparent; border: 0; border-radius: var(--f-r-control); cursor: pointer;
+  transition: background-color var(--f-fast) var(--f-ease-out), color var(--f-fast) var(--f-ease-out);
+}
+.fleet .f-nav-item:hover { background: var(--f-sunk); color: var(--f-ink); }
+.fleet .f-nav-item .f-icon { width: 1.25rem; height: 1.25rem; }
+
+.fleet .f-tabbar {
+  position: fixed; inset: auto 0 0; z-index: 20; background: var(--f-surface); border-top: 1px solid var(--f-line);
+  padding: var(--f-1) var(--f-1) max(var(--f-1), env(safe-area-inset-bottom));
+}
+.fleet .f-tabbar ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.fleet .f-tabbar li:nth-child(n + 5) { display: none; }
+.fleet .f-tabbar .f-nav-item {
+  flex-direction: column; justify-content: center; gap: 2px; min-height: 3.5rem; padding: var(--f-1) 0;
+  font-size: var(--f-t-xs); text-align: center;
+}
+.fleet .f-tabbar .f-nav-item:hover { background: transparent; }
+.fleet .f-tabbar .f-nav-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fleet .f-tabbar .f-nav-item .f-icon { box-sizing: content-box; padding: var(--f-1) min(var(--f-4), 1rem); border-radius: var(--f-r-pill); transition: background-color var(--f-fast) var(--f-ease-out); }
+.fleet .f-tabbar .f-nav-item:hover .f-icon { background: var(--f-sunk); }
+.fleet .f-tabbar .f-nav-item[aria-current='page'] { color: var(--f-brand); font-weight: 600; }
+.fleet .f-tabbar .f-nav-item[aria-current='page'] .f-icon { background: var(--f-brand-tint); }
+.fleet.f-app { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
+/* Keep focused controls clear of the fixed tab bar when the page scrolls to them. */
+:root:has(.fleet .f-tabbar) { scroll-padding-bottom: 5.5rem; }
+
+/* Toast: the visible copy of the status message. */
+.fleet .f-toast {
+  position: fixed; left: 50%; bottom: calc(5rem + env(safe-area-inset-bottom)); z-index: 40; max-width: min(28rem, calc(100% - 2rem));
+  padding: var(--f-3) var(--f-4); border-radius: var(--f-r-control); background: var(--f-ink); color: var(--f-on-brand);
+  font-size: var(--f-t-sm); box-shadow: var(--f-shadow-float); pointer-events: none;
+  opacity: 0; transform: translate(-50%, 0.5rem);
+  transition: opacity var(--f-exit) var(--f-ease-in), transform var(--f-exit) var(--f-ease-in);
+}
+.fleet .f-toast--on { opacity: 1; transform: translate(-50%, 0); transition-duration: var(--f-base); transition-timing-function: var(--f-ease-out); }
+
+/* Buttons: primary solid, secondary outlined, ghost for tertiary and icon buttons. */
+.fleet .f-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--f-2);
+  min-height: var(--f-target); padding: var(--f-2) var(--f-4);
+  font: inherit; font-size: var(--f-t-sm); font-weight: 600; text-decoration: none; cursor: pointer;
+  background: var(--f-surface); color: var(--f-brand);
+  border: 1px solid transparent; border-radius: var(--f-r-control);
+  transition: background-color var(--f-fast) var(--f-ease-out), border-color var(--f-fast) var(--f-ease-out), transform var(--f-fast) var(--f-ease-out);
+}
+.fleet .f-btn:active:not(:disabled) { transform: scale(0.98); }
+.fleet .f-btn:disabled { cursor: not-allowed; opacity: 0.55; }
+.fleet .f-btn--primary { background: var(--f-brand); color: var(--f-on-brand); }
+.fleet .f-btn--primary:hover { background: var(--f-brand-hover); }
+.fleet .f-btn--primary:disabled { cursor: progress; opacity: 1; }
+.fleet .f-btn--secondary { border-color: var(--f-line-strong); box-shadow: var(--f-shadow-rest); }
+.fleet .f-btn--secondary:hover { background: var(--f-brand-tint); border-color: var(--f-brand); }
+.fleet .f-btn--ghost { background: transparent; }
+.fleet .f-btn--ghost:hover:not(:disabled) { background: var(--f-sunk); }
+.fleet .f-btn--small { padding-inline: var(--f-3); }
+.fleet .f-btn--icon { padding: 0; width: var(--f-target); }
+.fleet .f-btn--block { width: 100%; }
+.fleet .f-linkbtn {
+  font: inherit; font-weight: 600; color: var(--f-brand); background: none; border: 0; padding: var(--f-2) 0;
+  min-height: 1.5rem; cursor: pointer; text-decoration: underline; text-underline-offset: 0.18em;
+}
+
+/* ---------- Sign-in: the same split as the board. A white working pane on the left, the depot's area on the right. ---------- */
+.fleet.f-entry { background: var(--f-surface); }
+.fleet .f-login-pane { padding: var(--f-5) var(--f-4) var(--f-6); }
+.fleet .f-login-col { display: grid; gap: var(--f-6); align-content: start; width: 100%; max-width: 26rem; margin-inline: auto; }
+/* No app bar before sign-in: the brand sits at the top of the form column, on its left edge. */
+.fleet .f-login-brand { padding-block: var(--f-1); }
+.fleet .f-login-form { display: grid; gap: var(--f-4); }
+.fleet .f-login-intro { display: grid; gap: var(--f-2); }
+/* The overline names the depots this sign-in serves; tiny caps with tracking is the one place caps are used. */
+.fleet .f-eyebrow { font-size: var(--f-t-xs); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--f-brand); }
+.fleet .f-login h1 { font-size: var(--f-t-2xl); line-height: 1.15; letter-spacing: -0.02em; }
+.fleet .f-lede { color: var(--f-muted); }
+/* Field icons: the leading icon takes the brand color with the focus ring, so the active field reads at a glance. */
+.fleet .f-login .f-input-lead { transition: color var(--f-fast) var(--f-ease-out); }
+.fleet .f-login .f-input-group:focus-within .f-input-lead { color: var(--f-brand); }
+.fleet .f-login .f-input-group input:last-child { padding-right: var(--f-3); } /* no trailing button to clear */
+/* Show/Hide gets the field's full inner height: it's tapped on almost every phone sign-in. */
+.fleet .f-login .f-input-action { right: 1px; min-height: calc(3rem - 2px); }
+/* A failed submit nudges the field it moved focus to; the message below says what to fix. */
+.fleet .f-login .f-input-group:has([aria-invalid='true']) { animation: f-nudge var(--f-sheet) var(--f-ease-out); }
+.fleet .f-login .f-field input { min-height: 3rem; } /* the two fields of the day, typed on phones at the start of a shift */
+.fleet .f-login .f-btn--primary { min-height: 3rem; font-size: var(--f-t-md); }
+.fleet .f-btn--done:disabled { cursor: default; }
+/* Desktop only: the area the board covers, as context next to the form. */
+.fleet .f-login-map { display: none; }
+.fleet .f-form { display: grid; gap: var(--f-4); }
+.fleet .f-field { display: grid; gap: var(--f-2); }
+.fleet .f-field label { font-size: var(--f-t-sm); font-weight: 500; }
+.fleet .f-field input {
+  min-height: var(--f-target); width: 100%; padding: var(--f-2) var(--f-3);
+  font: inherit; color: var(--f-ink); background: var(--f-surface);
+  border: 1px solid var(--f-line-strong); border-radius: var(--f-r-control);
+  transition: border-color var(--f-fast) var(--f-ease-out);
+}
+.fleet .f-field input:hover { border-color: var(--f-muted); }
+.fleet .f-field input:focus-visible { outline-offset: 1px; border-color: var(--f-brand); }
+.fleet .f-field input[aria-invalid='true'] { border-color: var(--f-crit); box-shadow: var(--f-ring-error); }
+.fleet .f-input-group { position: relative; display: flex; align-items: center; }
+.fleet .f-input-group input { padding-right: 5.5rem; }
+.fleet .f-input-lead { position: absolute; left: var(--f-3); color: var(--f-muted); pointer-events: none; }
+.fleet .f-input-lead + input { padding-left: 2.5rem; }
+.fleet .f-input-action { position: absolute; right: var(--f-1); min-height: calc(var(--f-target) - var(--f-2)); }
+.fleet .f-input-action.f-btn--icon { width: calc(var(--f-target) - var(--f-2)); }
+.fleet .f-error, .fleet .f-caps { display: flex; gap: var(--f-2); align-items: flex-start; color: var(--f-crit); font-size: var(--f-t-sm); animation: f-in var(--f-base) var(--f-ease-out); }
+.fleet .f-caps { color: var(--f-warn); font-weight: 500; }
+.fleet .f-error .f-icon, .fleet .f-caps .f-icon { margin-top: 0.15em; }
+.fleet .f-or { display: flex; align-items: center; gap: var(--f-3); color: var(--f-muted); font-size: var(--f-t-sm); }
+.fleet .f-or::before, .fleet .f-or::after { content: ''; flex: 1; height: 1px; background: var(--f-line); }
+.fleet .f-hint { display: flex; gap: var(--f-2); align-items: flex-start; font-size: var(--f-t-sm); background: var(--f-bg); padding: var(--f-3); border-radius: var(--f-r-control); }
+.fleet .f-hint .f-icon { margin-top: 0.15em; color: var(--f-muted); }
+.fleet .f-help { font-size: var(--f-t-sm); color: var(--f-muted); text-wrap: pretty; }
+.fleet .f-login p { text-wrap: pretty; }
+
+/* ---------- Board ---------- */
+/* Phones stack the workspace: depot and shift, the exception queue, the rest of the shift, the map, then all vehicles.
+   From 1024px the queue and the map sit side by side and fill the screen under the top bar, edge to edge. */
+.fleet .f-work { background: var(--f-surface); border-bottom: 1px solid var(--f-line); }
+.fleet .f-triage { display: grid; min-width: 0; }
+.fleet .f-head { display: grid; gap: var(--f-3); padding: var(--f-4); border-bottom: 1px solid var(--f-line); }
+.fleet .f-head-title { display: flex; align-items: center; justify-content: space-between; gap: var(--f-3); }
+.fleet .f-fresh { display: inline-flex; align-items: center; gap: var(--f-2); font-size: var(--f-t-sm); color: var(--f-muted); }
+.fleet .f-stale { color: var(--f-warn); font-weight: 600; }
+.fleet .f-live { width: 0.5rem; height: 0.5rem; border-radius: var(--f-r-pill); background: var(--f-brand); box-shadow: var(--f-halo-live); }
+.fleet .f-banner { margin: var(--f-4) var(--f-4) 0; }
+
+/* The queue's headline is its count: large, in the color of the worst open exception, on that color's tint.
+   Clear shifts turn it moor green. This is the strongest element on the screen and the only big number. */
+.fleet .f-queue { padding: var(--f-4) var(--f-4) var(--f-3); min-width: 0; }
+.fleet .f-q-title { display: flex; align-items: center; gap: var(--f-3); margin-bottom: var(--f-3); }
+.fleet .f-q-title--crit, .fleet .f-q-title--warn, .fleet .f-q-title--clear { padding: var(--f-3) var(--f-4); border-radius: var(--f-r-card); }
+.fleet .f-q-title--crit { background: var(--f-crit-bg); }
+.fleet .f-q-title--warn { background: var(--f-warn-bg); }
+.fleet .f-q-title--clear { background: var(--f-brand-tint); }
+.fleet .f-big { font-size: var(--f-t-3xl); font-weight: 600; line-height: 1; letter-spacing: -0.03em; }
+.fleet .f-q-title--crit .f-big { color: var(--f-crit); }
+.fleet .f-q-title--warn .f-big { color: var(--f-warn); }
+.fleet .f-q-title--clear .f-big { color: var(--f-brand); }
+.fleet .f-q-label { display: grid; gap: 2px; font-size: var(--f-t-lg); line-height: 1.25; }
+.fleet .f-q-sub { font-size: var(--f-t-sm); font-weight: 500; color: var(--f-muted); }
+
+/* The rest of the shift: three quiet numbers under the queue, each opening its filter in All vehicles. */
+.fleet .f-tally { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--f-line); }
+.fleet .f-tally li + li { border-left: 1px solid var(--f-line); }
+.fleet .f-tally-btn {
+  display: grid; gap: 0; width: 100%; height: 100%; min-height: var(--f-target); padding: var(--f-3) var(--f-4); text-align: left; cursor: pointer;
+  font: inherit; color: var(--f-ink); background: transparent; border: 0;
+  transition: background-color var(--f-fast) var(--f-ease-out);
+}
+.fleet .f-tally-btn:hover { background: var(--f-bg); }
+.fleet .f-tally-btn:focus-visible { outline-offset: -3px; }
+.fleet .f-tally-n { font-size: var(--f-t-xl); font-weight: 600; line-height: 1.2; letter-spacing: -0.015em; }
+.fleet .f-tally-label { font-size: var(--f-t-sm); color: var(--f-muted); }
+
+/* Callouts and page banners: a full soft tint with an icon and a title, no side stripe. */
+.fleet .f-callout {
+  display: flex; gap: var(--f-3); align-items: flex-start; padding: var(--f-3) var(--f-4);
+  border: 1px solid; border-radius: var(--f-r-card); animation: f-in var(--f-base) var(--f-ease-out);
+}
+.fleet .f-callout > .f-icon { margin-top: 0.2em; }
+.fleet .f-callout > div { display: grid; gap: var(--f-1); }
+.fleet .f-callout-title { font-weight: 600; }
+.fleet .f-callout--critical { background: var(--f-crit-bg); border-color: var(--f-crit-line); }
+.fleet .f-callout--critical > .f-icon, .fleet .f-callout--critical .f-callout-title { color: var(--f-crit); }
+.fleet .f-callout--warning { background: var(--f-warn-bg); border-color: var(--f-warn-line); }
+.fleet .f-callout--warning > .f-icon, .fleet .f-callout--warning .f-callout-title { color: var(--f-warn); }
+
+.fleet .f-count {
+  display: inline-flex; align-items: center; min-height: 1.5rem; padding: 0 var(--f-2); border-radius: var(--f-r-pill);
+  font-size: var(--f-t-xs); font-weight: 600; background: var(--f-sunk); color: var(--f-muted);
+}
+
+/* Empty, error, and no-match states: one icon and a sentence with the next step. */
+.fleet .f-state {
+  display: flex; gap: var(--f-3); align-items: flex-start; padding: var(--f-4); max-width: 60ch;
+  color: var(--f-muted); font-size: var(--f-t-sm); background: var(--f-bg); border-radius: var(--f-r-control);
+}
+.fleet .f-state > .f-icon { width: 1.25rem; height: 1.25rem; margin-top: 0.05em; }
+
+/* Skeleton: shaped like the rows it stands in for. */
+.fleet .f-skeleton { display: grid; gap: var(--f-2); }
+.fleet .f-skeleton span {
+  display: block; height: 4.5rem; border-radius: var(--f-r-control);
+  background: linear-gradient(90deg, var(--f-sunk) 0 40%, var(--f-bg) 50%, var(--f-sunk) 60% 100%) 0 0 / 300% 100%;
+  animation: f-shimmer 1.6s linear infinite;
+}
+.fleet .f-skeleton--strip { padding: var(--f-3) var(--f-4); border-top: 1px solid var(--f-line); }
+.fleet .f-skeleton--strip span { height: 3.5rem; }
+.fleet .f-mapwrap .f-skeleton:empty { aspect-ratio: 4 / 3; background: var(--f-sunk); }
+
+/* Vehicle rows (exception queue, and the fleet list on phones): a status tile, then unit, status, and the time that
+   matters, then one line of what's going on. A divided list, no box inside the box. */
+.fleet .f-list { display: grid; grid-template-columns: minmax(0, 1fr); margin-inline: calc(var(--f-2) * -1); }
+.fleet .f-list li + li { border-top: 1px solid var(--f-line); }
+.fleet .f-row {
+  display: flex; align-items: flex-start; gap: var(--f-3); width: 100%; text-align: left; cursor: pointer;
+  padding: var(--f-3) var(--f-2); font: inherit; font-size: var(--f-t-sm); color: var(--f-ink);
+  background: transparent; border: 0; border-radius: var(--f-r-control);
+  transition: background-color var(--f-fast) var(--f-ease-out), transform var(--f-fast) var(--f-ease-out);
+}
+.fleet .f-row:hover { background: var(--f-bg); }
+.fleet .f-row:active { transform: scale(0.99); }
+.fleet .f-row-main { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.fleet .f-row-go { align-self: center; color: var(--f-muted); transition: transform var(--f-fast) var(--f-ease-out); }
+.fleet .f-row:hover .f-row-go { transform: translateX(2px); }
+.fleet .f-row-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--f-2); }
+.fleet .f-id { font-size: var(--f-t-md); font-weight: 600; }
+.fleet .f-kind { font-weight: 600; color: var(--f-muted); }
+.fleet .f-kind--critical { color: var(--f-crit); }
+.fleet .f-kind--warning { color: var(--f-warn); }
+.fleet .f-kind--handled { color: var(--f-brand); }
+.fleet .f-row-time { margin-left: auto; font-size: var(--f-t-sm); font-weight: 500; color: var(--f-muted); white-space: nowrap; }
+.fleet .f-row-meta { color: var(--f-muted); font-size: var(--f-t-xs); }
+.fleet .f-tile {
+  display: grid; place-items: center; width: 2.25rem; height: 2.25rem; flex: none; border-radius: var(--f-r-control);
+  background: var(--f-sunk); color: var(--f-muted);
+}
+.fleet .f-tile svg { width: 1.125rem; height: 1.125rem; }
+.fleet .f-tile--critical { background: var(--f-crit-bg); color: var(--f-crit); }
+.fleet .f-tile--warning { background: var(--f-warn-bg); color: var(--f-warn); }
+.fleet .f-tile--handled { background: var(--f-brand-tint); color: var(--f-brand); animation: f-swap var(--f-base) var(--f-ease-out); }
+
+/* Status: tinted pills for exceptions, quiet text for the normal state. */
+.fleet .f-status { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--f-1) var(--f-2); }
+.fleet .f-pill {
+  display: inline-flex; align-items: center; gap: var(--f-1); min-height: 1.5rem; padding: 0 var(--f-2) 0 0.375rem;
+  border-radius: var(--f-r-pill); font-size: var(--f-t-sm); font-weight: 500; white-space: nowrap;
+}
+.fleet .f-pill .f-icon { width: 1rem; height: 1rem; }
+.fleet .f-pill--critical { background: var(--f-crit-bg); color: var(--f-crit); }
+.fleet .f-pill--warning { background: var(--f-warn-bg); color: var(--f-warn); }
+.fleet .f-pill--handled { background: var(--f-brand-tint); color: var(--f-brand); animation: f-in var(--f-base) var(--f-ease-out); }
+.fleet .f-quiet { display: inline-flex; align-items: center; gap: var(--f-1); color: var(--f-muted); white-space: nowrap; }
+.fleet .f-quiet .f-icon { width: 1rem; height: 1rem; }
+
+/* Map: Leaflet with a muted no-label basemap; the fictional places, the depot, and vehicles are drawn as markers. */
+.fleet .f-mapwrap { position: relative; min-width: 0; border-top: 1px solid var(--f-line); }
+.fleet .f-map-h { padding: var(--f-4) var(--f-4) var(--f-3); }
+.fleet .f-mapwrap > .f-state, .fleet .f-mapwrap > .f-skeleton { margin: 0 var(--f-4) var(--f-4); }
+.fleet .f-map { aspect-ratio: 4 / 3; isolation: isolate; overflow: hidden; font-family: var(--f-font); background: var(--f-sunk); }
+/* Leaflet's plus-lighter tile blend leaves bright seams at fractional zoom with this basemap; normal blending doesn't. */
+.fleet .f-map img.leaflet-tile { mix-blend-mode: normal; }
+.fleet .f-map .leaflet-bar { border: 1px solid var(--f-line); border-radius: var(--f-r-control); box-shadow: var(--f-shadow-raised); overflow: hidden; }
+.fleet .f-map .leaflet-bar a {
+  width: var(--f-target); height: var(--f-target); border-radius: 0; border-bottom-color: var(--f-line);
+  font: 500 var(--f-t-lg)/var(--f-target) var(--f-font); color: var(--f-ink); background: var(--f-surface);
+  transition: background-color var(--f-fast) var(--f-ease-out);
+}
+.fleet .f-map .leaflet-bar a:hover { background: var(--f-sunk); }
+.fleet .f-map .leaflet-control-attribution {
+  font-size: var(--f-t-xs); color: var(--f-muted); background: color-mix(in srgb, var(--f-surface) 88%, transparent);
+  border-top-left-radius: var(--f-r-control); padding: 0 var(--f-2);
+}
+.fleet .f-map .leaflet-control-attribution a { color: var(--f-brand); }
+.fleet .f-mk { background: none; border: 0; }
+.fleet .f-mk > div { position: absolute; width: max-content; transform: translate(-50%, -50%); }
+.fleet .f-place {
+  display: block; transform: translateY(-0.9rem); color: var(--f-muted); font-size: var(--f-t-xs); font-weight: 600;
+  text-shadow: 0 0 2px var(--f-surface), 0 0 3px var(--f-surface), 0 0 6px var(--f-surface);
+}
+.fleet .f-place--below { transform: translateY(0.9rem); }
+.fleet .f-depot {
+  display: inline-flex; align-items: center; gap: var(--f-1); padding: 2px var(--f-2) 2px 2px; color: var(--f-ink);
+  font-size: var(--f-t-xs); font-weight: 600; background: var(--f-surface); border-radius: var(--f-r-pill); box-shadow: var(--f-shadow-raised);
+}
+.fleet .f-depot-mark {
+  display: inline-grid; place-items: center; width: 1.375rem; height: 1.375rem; border-radius: var(--f-r-pill);
+  background: var(--f-brand); color: var(--f-on-brand);
+}
+.fleet .f-depot-mark svg { width: 0.8rem; height: 0.8rem; }
+.fleet .f-dot { display: block; width: 0.75rem; height: 0.75rem; border-radius: var(--f-r-pill); background: var(--f-muted); box-shadow: var(--f-shadow-dot); }
+.fleet .f-dot--static { display: inline-block; width: 0.625rem; height: 0.625rem; }
+.fleet .f-flag {
+  display: inline-flex; align-items: center; gap: var(--f-1); min-height: 1.5rem; padding: 0 var(--f-2) 0 0.3rem; color: var(--f-ink);
+  font-size: var(--f-t-xs); font-weight: 600; background: var(--f-surface); border: 1px solid var(--f-line);
+  border-radius: var(--f-r-pill); box-shadow: var(--f-shadow-raised);
+  transition: transform var(--f-fast) var(--f-ease-out);
+}
+.fleet .f-flag:hover { transform: translateY(-1px); }
+.fleet .f-flag .f-icon { width: 1rem; height: 1rem; }
+.fleet .f-flag--critical { border-color: var(--f-crit-line); }
+.fleet .f-flag--critical .f-icon { color: var(--f-crit); }
+.fleet .f-flag--warning { border-color: var(--f-warn-line); }
+.fleet .f-flag--warning .f-icon { color: var(--f-warn); }
+.fleet .f-flag--handled { color: var(--f-muted); }
+/* The vehicle that's open: solid moor green, the selection color, so it's found on the map at a glance. */
+.fleet .f-flag--on, .fleet .f-flag--on .f-icon { background: var(--f-brand); color: var(--f-on-brand); border-color: var(--f-brand); }
+.fleet .f-flag--on { animation: f-swap var(--f-base) var(--f-ease-out); }
+.fleet .f-legend { display: flex; flex-wrap: wrap; gap: var(--f-1) var(--f-4); padding: var(--f-3) var(--f-4) var(--f-4); font-size: var(--f-t-xs); color: var(--f-muted); }
+.fleet .f-legend li { display: inline-flex; align-items: center; gap: var(--f-1); }
+.fleet .f-legend .f-icon { width: 1rem; height: 1rem; }
+.fleet .f-legend .f-depot-mark { width: 1rem; height: 1rem; }
+.fleet .f-legend .f-depot-mark svg { width: 0.625rem; height: 0.625rem; }
+
+/* All vehicles: below the workspace, on the page background. Search, segmented filter, stacked rows with
+   "Load more" on phones, a paged table from 768px. */
+.fleet .f-all { padding: var(--f-5) var(--f-4) var(--f-6); min-width: 0; }
+.fleet .f-all-head { display: flex; align-items: center; gap: var(--f-2); margin-bottom: var(--f-3); }
+.fleet .f-tools { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--f-3); margin-bottom: var(--f-4); }
+.fleet .f-search { max-width: 28rem; }
+.fleet .f-search input { padding-right: var(--f-6); }
+.fleet .f-segments {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; padding: 3px; align-self: end;
+  background: var(--f-sunk); border-radius: var(--f-r-card);
+}
+.fleet .f-segment {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--f-2);
+  min-height: var(--f-target); padding-inline: var(--f-3); font: inherit; font-size: var(--f-t-sm); font-weight: 500;
+  cursor: pointer; color: var(--f-muted); background: transparent; border: 0; border-radius: var(--f-r-control);
+  transition: background-color var(--f-fast) var(--f-ease-out), color var(--f-fast) var(--f-ease-out);
+}
+.fleet .f-segment:hover { color: var(--f-ink); }
+.fleet .f-segment[aria-pressed='true'] { background: var(--f-surface); color: var(--f-brand); font-weight: 600; box-shadow: var(--f-shadow-raised); }
+.fleet .f-segment-n { min-width: 1.5rem; padding: 0 var(--f-1); border-radius: var(--f-r-pill); background: var(--f-surface); font-size: var(--f-t-xs); font-weight: 600; }
+.fleet .f-segment[aria-pressed='true'] .f-segment-n { background: var(--f-brand-tint); }
+.fleet .f-all .f-row:hover { background: var(--f-sunk); }
+
+.fleet .f-foot { display: grid; gap: var(--f-3); margin-top: var(--f-3); font-size: var(--f-t-sm); color: var(--f-muted); }
+.fleet .f-desk { display: none; }
+.fleet .f-plate { display: block; font-size: var(--f-t-xs); font-weight: 500; color: var(--f-muted); white-space: nowrap; }
+.fleet h2 .f-plate { display: inline; font-size: var(--f-t-md); margin-left: var(--f-2); }
+.fleet .f-sub { display: block; color: var(--f-muted); font-size: var(--f-t-sm); }
+
+/* Vehicle detail. The same content in three places: a bottom sheet on phones, a side panel on tablets,
+   and in place of the queue on desktop. Call and Mark as handled come first: they're why it was opened. */
+.fleet .f-drawer {
+  margin: auto 0 0; width: 100%; max-width: 100%; max-height: 90vh; padding: 0;
+  border: 0; border-radius: var(--f-r-sheet) var(--f-r-sheet) 0 0; color: var(--f-ink); background: var(--f-surface);
+  box-shadow: var(--f-shadow-float);
+  opacity: 0; transform: var(--f-sheet-from);
+  transition: transform var(--f-exit) var(--f-ease-in), opacity var(--f-exit) var(--f-ease-in),
+    overlay var(--f-exit) allow-discrete, display var(--f-exit) allow-discrete;
+}
+.fleet .f-drawer[open] { opacity: 1; transform: none; transition-duration: var(--f-sheet); transition-timing-function: var(--f-ease-out); }
+@starting-style { .fleet .f-drawer[open] { opacity: 0; transform: var(--f-sheet-from); } }
+.fleet .f-drawer::backdrop {
+  background: var(--f-scrim); opacity: 0;
+  transition: opacity var(--f-exit) var(--f-ease-in), overlay var(--f-exit) allow-discrete, display var(--f-exit) allow-discrete;
+}
+.fleet .f-drawer[open]::backdrop { opacity: 1; transition-duration: var(--f-sheet); }
+@starting-style { .fleet .f-drawer[open]::backdrop { opacity: 0; } }
+.fleet .f-drawer-body { display: grid; gap: var(--f-4); padding: var(--f-4); padding-bottom: max(var(--f-4), env(safe-area-inset-bottom)); }
+.fleet .f-drawer-body::before { /* sheet grabber */
+  content: ''; justify-self: center; width: 2.5rem; height: 4px; margin: calc(var(--f-2) * -1) 0 calc(var(--f-2) * -1);
+  border-radius: var(--f-r-pill); background: var(--f-line-mid);
+}
+.fleet .f-drawer-head { display: flex; align-items: center; justify-content: space-between; gap: var(--f-3); }
+.fleet .f-detail { display: grid; align-content: start; gap: var(--f-4); padding: var(--f-3) var(--f-4) var(--f-4); animation: f-in var(--f-base) var(--f-ease-out); }
+.fleet .f-back { justify-self: start; margin-left: calc(var(--f-3) * -1); }
+.fleet .f-driver { display: flex; align-items: center; gap: var(--f-3); }
+.fleet .f-driver .f-avatar { width: 2.5rem; height: 2.5rem; font-size: var(--f-t-sm); }
+.fleet .f-driver-name { font-weight: 600; }
+.fleet .f-facts { display: grid; margin: 0; font-size: var(--f-t-sm); border-top: 1px solid var(--f-line); }
+.fleet .f-facts div { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: var(--f-3); padding: var(--f-2) 0; border-bottom: 1px solid var(--f-line); }
+.fleet .f-facts dt { color: var(--f-muted); }
+.fleet .f-facts dd { margin: 0; font-weight: 500; }
+.fleet .f-drawer-actions { display: grid; gap: var(--f-3); }
+.fleet .f-done {
+  display: flex; gap: var(--f-2); align-items: flex-start; font-size: var(--f-t-sm); padding: var(--f-3);
+  background: var(--f-brand-tint); color: var(--f-brand); border-radius: var(--f-r-control); animation: f-in var(--f-base) var(--f-ease-out);
+}
+.fleet .f-done .f-icon { margin-top: 0.15em; }
+
+/* Motion */
+.fleet .f-spin { animation: f-spin 0.8s linear infinite; }
+.fleet .f-spin-once { animation: f-spin var(--f-sheet) var(--f-ease-out); }
+.fleet .f-swap { animation: f-swap var(--f-base) var(--f-ease-out); }
+@keyframes f-spin { to { transform: rotate(360deg); } }
+@keyframes f-swap { from { opacity: 0; transform: scale(0.6); } }
+@keyframes f-fade { from { opacity: 0; } }
+@keyframes f-nudge { 20% { transform: translateX(-4px); } 45% { transform: translateX(4px); } 70% { transform: translateX(-2px); } }
+@keyframes f-in { from { opacity: 0; transform: translateY(-2px); } }
+@keyframes f-pop { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
+@keyframes f-shimmer { to { background-position: -150% 0; } }
+@keyframes f-rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes f-drop { from { opacity: 0; transform: translateY(-10px); } }
+@keyframes f-grow { from { transform: scaleX(0); } }
+
+/* Sign-in entrance: shown once per shift, so one short entrance is allowed (motion.md).
+   Three groups, 40 ms apart, done by about 350 ms. It never blocks input: fields work from the first frame. */
+.fleet .f-login-col > * { animation: f-rise 260ms var(--f-ease-out) both; }
+.fleet .f-login-col > :nth-child(2) { animation-delay: 40ms; }
+.fleet .f-login-col > :nth-child(n + 3) { animation-delay: 80ms; }
+.fleet .f-login-map { animation: f-fade 320ms var(--f-ease-out) 60ms both; }
+.fleet .f-login-map .f-depot { animation: f-drop 280ms var(--f-ease-out) 260ms both; }
+.fleet .f-login-cap .f-shift-bar::before { animation: f-grow 320ms var(--f-ease-out) 120ms both; }
+
+@media (max-width: 29.99rem) {
+  .fleet .f-top .f-wordmark-product { display: none; }
+  .fleet .f-segment { padding-inline: var(--f-1); gap: var(--f-1); }
+}
+
+@media (min-width: 30rem) {
+  .fleet .f-segments { display: inline-grid; grid-template-columns: repeat(4, auto); justify-self: start; }
+}
+
+/* Centre the sign-in in the space below the demo bar from tablet up. Phones keep it at the top, clear of the keyboard. */
+@media (min-width: 48rem) {
+  .fleet:has(> .f-login) { display: flex; flex-direction: column; min-height: 100dvh; }
+  .fleet > .f-login { flex: 1; display: grid; }
+  .fleet .f-login-pane { display: grid; align-content: center; padding: var(--f-7) var(--f-6); }
+}
+
+@media (min-width: 48rem) {
+  .fleet { --f-sheet-from: translateX(100%); }
+  .fleet.f-app { padding-bottom: 0; }
+  .fleet .f-tabbar { display: none; }
+  :root:has(.fleet .f-tabbar) { scroll-padding-bottom: 0; }
+  .fleet .f-toast { bottom: var(--f-5); }
+
+  /* Top bar navigation: tabs with an underline for the current one. Icons only until there's room for labels. */
+  .fleet .f-top { gap: var(--f-4); padding-inline: var(--f-5); }
+  .fleet .f-top > .f-wordmark { margin-right: var(--f-2); }
+  .fleet .f-topnav { display: block; flex: 1; align-self: stretch; }
+  .fleet .f-topnav ul { display: flex; height: 100%; gap: var(--f-1); }
+  .fleet .f-topnav .f-nav-item { position: relative; height: 100%; border-radius: 0; }
+  .fleet .f-topnav .f-nav-item:hover { background: transparent; color: var(--f-ink); }
+  .fleet .f-topnav .f-nav-item::after {
+    content: ''; position: absolute; inset: auto var(--f-2) -1px; height: 2px;
+    background: var(--f-brand); transform: scaleX(0); transition: transform var(--f-base) var(--f-ease-out);
+  }
+  .fleet .f-topnav .f-nav-item[aria-current='page'] { color: var(--f-brand); font-weight: 600; }
+  .fleet .f-topnav .f-nav-item[aria-current='page']::after { transform: none; }
+  .fleet .f-topnav .f-nav-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .fleet .f-menu-name { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+
+  .fleet .f-map { aspect-ratio: 16 / 10; }
+  .fleet .f-all { padding: var(--f-6) var(--f-5); }
+  .fleet .f-segment { white-space: nowrap; }
+
+  .fleet .f-phone { display: none; }
+  .fleet .f-desk { display: block; }
+  .fleet .f-table-scroll {
+    overflow: auto; max-height: 70vh; background: var(--f-surface);
+    border: 1px solid var(--f-line); border-radius: var(--f-r-card); box-shadow: var(--f-shadow-rest);
+  }
+  .fleet .f-table { width: 100%; min-width: 62rem; border-collapse: separate; border-spacing: 0; font-size: var(--f-t-sm); line-height: 1.35; }
+  .fleet .f-table th, .fleet .f-table td { padding: var(--f-3); text-align: left; vertical-align: middle; border-bottom: 1px solid var(--f-line); background: var(--f-surface); transition: background-color var(--f-fast) var(--f-ease-out); }
+  .fleet .f-table tbody tr:last-child > * { border-bottom: 0; }
+  .fleet .f-table thead th { position: sticky; top: 0; z-index: 2; background: var(--f-bg); color: var(--f-muted); font-size: var(--f-t-xs); font-weight: 500; white-space: nowrap; }
+  .fleet .f-table tbody th { position: sticky; left: 0; z-index: 1; font-weight: 600; }
+  .fleet .f-table thead th:first-child { left: 0; z-index: 3; }
+  .fleet .f-table tbody tr { cursor: pointer; }
+  .fleet .f-table tbody tr:hover > * { background: var(--f-bg); }
+  .fleet .f-table tbody tr.f-tr-on > * { background: var(--f-brand-tint); }
+  .fleet .f-table .f-linkbtn { padding: 0; min-height: 1.5rem; font-size: var(--f-t-md); text-decoration: none; }
+  .fleet .f-table .f-linkbtn:hover { text-decoration: underline; }
+  .fleet .f-table .f-num { text-align: right; white-space: nowrap; }
+  /* Sortable headers: the arrow is always shown (muted until sorted) so sorting isn't a hover-only discovery. */
+  .fleet .f-table thead th:has(.f-sort) { padding-block: 0; }
+  .fleet .f-sort {
+    display: inline-flex; align-items: center; gap: var(--f-1); min-height: var(--f-target); padding: 0; margin: 0;
+    font: inherit; color: inherit; background: none; border: 0; cursor: pointer; white-space: nowrap;
+    transition: color var(--f-fast) var(--f-ease-out);
+  }
+  .fleet .f-sort:hover, .fleet .f-sort--on { color: var(--f-ink); }
+  .fleet .f-sort--on { font-weight: 600; }
+  .fleet .f-sort .f-icon { width: 0.875rem; height: 0.875rem; opacity: 0.7; }
+  .fleet .f-sort--on .f-icon { opacity: 1; color: var(--f-brand); }
+  .fleet .f-num .f-sort { flex-direction: row-reverse; }
+  /* Planned vs actual: a signed delta under the ETA, only when it runs past the window. */
+  .fleet .f-delta { display: block; font-size: var(--f-t-xs); font-weight: 600; color: var(--f-warn); }
+  .fleet .f-person { display: inline-flex; align-items: center; gap: var(--f-2); }
+  .fleet .f-person .f-avatar { width: 1.75rem; height: 1.75rem; }
+
+  .fleet .f-foot--table { display: flex; flex-wrap: wrap; align-items: center; gap: var(--f-2) var(--f-4); }
+  .fleet .f-foot--table > p { flex: 1 1 auto; }
+  .fleet .f-size { display: inline-flex; align-items: center; gap: var(--f-2); }
+  .fleet .f-pages { display: flex; align-items: center; gap: var(--f-1); }
+  .fleet .f-page {
+    min-width: var(--f-target); min-height: var(--f-target); font: inherit; font-size: var(--f-t-sm); font-weight: 500; cursor: pointer;
+    color: var(--f-ink); background: transparent; border: 0; border-radius: var(--f-r-control);
+    transition: background-color var(--f-fast) var(--f-ease-out);
+  }
+  .fleet .f-page:hover { background: var(--f-sunk); }
+  .fleet .f-page[aria-current='page'] { background: var(--f-brand); color: var(--f-on-brand); font-weight: 600; }
+
+  .fleet .f-drawer {
+    margin: 0 0 0 auto; width: 30rem; height: 100vh; max-height: 100vh;
+    border-radius: var(--f-r-dialog) 0 0 var(--f-r-dialog);
+  }
+  .fleet .f-drawer-body { padding: var(--f-5); }
+  .fleet .f-drawer-body::before { display: none; }
+}
+
+@media (min-width: 64rem) {
+  .fleet .f-topnav .f-nav-label { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+
+  /* The top bar stays put, so the workspace below it can fill exactly one screen. */
+  .fleet .f-top { position: sticky; top: 0; z-index: 25; height: var(--f-top-h); }
+  :root:has(.fleet .f-top) { scroll-padding-top: calc(var(--f-top-h) + var(--f-4)); }
+
+  /* Workspace: the triage pane docked against a full-bleed map, one surface split by a divider.
+     The queue scrolls inside its pane; the depot header and the tally stay pinned at its top and bottom. */
+  .fleet .f-work {
+    display: grid; grid-template-columns: minmax(22rem, 27rem) minmax(0, 1fr);
+    /* The demo bar (one 3.5rem row at this width) also sits above on first load; a real product has none. */
+    height: calc(100dvh - var(--f-top-h) - 3.5rem); min-height: 36rem;
+  }
+  .fleet .f-triage { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--f-line); }
+  .fleet .f-head { padding: var(--f-5) var(--f-5) var(--f-4); }
+  .fleet .f-banner { margin: var(--f-4) var(--f-5) 0; }
+  .fleet .f-queue, .fleet .f-detail { flex: 1; min-height: 0; overflow: auto; }
+  .fleet .f-queue { padding: var(--f-4) var(--f-5) var(--f-3); }
+  .fleet .f-detail { padding: var(--f-3) var(--f-5) var(--f-5); }
+  .fleet .f-tally-btn { padding-inline: var(--f-5); }
+
+  .fleet .f-mapwrap { display: flex; flex-direction: column; border-top: 0; }
+  /* The map explains itself; its heading stays for screen readers and the region name. */
+  .fleet .f-map-h { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .fleet .f-mapwrap .f-map { flex: 1; aspect-ratio: auto; }
+  /* No map (loading, error, empty shift): the pane keeps its place as a sunk surface with the message centred,
+     so the layout doesn't jump when data arrives and the pane never reads as a blank void. */
+  .fleet .f-mapwrap:not(:has(.f-map)) { background: var(--f-sunk); }
+  .fleet .f-mapwrap > .f-state { margin: auto; background: var(--f-surface); box-shadow: var(--f-shadow-rest); }
+  .fleet .f-mapwrap > .f-skeleton { flex: 1; margin: 0; }
+  .fleet .f-mapwrap > .f-skeleton:empty { aspect-ratio: auto; }
+  .fleet .f-mapwrap .f-legend {
+    position: absolute; top: var(--f-4); left: var(--f-4); z-index: 1000; max-width: calc(100% - 2 * var(--f-4));
+    padding: var(--f-2) var(--f-3); background: var(--f-surface); border: 1px solid var(--f-line);
+    border-radius: var(--f-r-control); box-shadow: var(--f-shadow-raised);
+  }
+
+  .fleet .f-all { padding: var(--f-6); }
+  .fleet .f-tools { grid-template-columns: minmax(16rem, 26rem) auto; justify-content: space-between; align-items: end; }
+  .fleet .f-segments { justify-self: end; }
+
+  /* Sign-in: the board's split. The form pane on the left where the eye starts, the depot's area filling the rest. */
+  .fleet > .f-login { grid-template-columns: minmax(26rem, 34rem) minmax(0, 1fr); }
+  .fleet .f-login-pane { border-right: 1px solid var(--f-line); }
+  .fleet .f-login-map { display: block; position: relative; margin: 0; min-height: 34rem; }
+  .fleet .f-login-map .f-map { position: absolute; inset: 0; aspect-ratio: auto; }
+  .fleet .f-login-cap {
+    position: absolute; left: var(--f-5); bottom: var(--f-6); z-index: 1000; display: grid; gap: var(--f-3); width: min(22rem, calc(100% - 3rem));
+    padding: var(--f-4); background: var(--f-surface); border: 1px solid var(--f-line);
+    border-radius: var(--f-r-card); box-shadow: var(--f-shadow-raised);
+  }
+}
+
+@media (min-width: 64rem) and (pointer: fine) {
+  .fleet { --f-target: 2.5rem; }
+}
+
+/* Reduced motion: no sliding, spinning, growing, or shimmer; fades stay. */
+@media (prefers-reduced-motion: reduce) {
+  .fleet { --f-sheet-from: none; }
+  .fleet .f-spin-once, .fleet .f-skeleton span, .fleet .f-login .f-input-group:has([aria-invalid='true']),
+  .fleet .f-login-cap .f-shift-bar::before, .fleet .f-login-map .f-depot { animation: none; }
+  .fleet .f-swap, .fleet .f-login-col > *, .fleet .f-tile--handled, .fleet .f-flag--on { animation-name: f-fade; }
+  .fleet .f-spin { animation-duration: 2s; }
+  .fleet .f-toast { transform: translate(-50%, 0); }
+  .fleet .f-topnav .f-nav-item::after { transition: none; }
+  .fleet .f-btn:active:not(:disabled), .fleet .f-row:active, .fleet .f-row:hover .f-row-go, .fleet .f-flag:hover { transform: none; }
+}
