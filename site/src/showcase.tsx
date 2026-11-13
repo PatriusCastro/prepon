@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
 import { Pause, Play, RotateCcw, SkipForward, Monitor, Smartphone, ChevronsLeftRight } from 'lucide-react';
 import detectSrc from '../../plugins/prepon/skills/prepon/scripts/detect-slop.js?raw';
 import { Link } from './router';
@@ -149,7 +149,8 @@ function detect(text: string): Finding[] {
 const FIRST = 5;
 type Group = { rule: string; suggestion: string; lines: number[]; matches: string[]; count: number };
 
-export function SlopToy() {
+// `head` renders at the top of the editor column, so on wide screens the section heading stays pinned with the editor.
+export function SlopToy({ head }: { head?: ReactNode }) {
   const [code, setCode] = useState(SLOP_SAMPLE);
   const [all, setAll] = useState(false);
   const [active, setActive] = useState(0);
@@ -184,12 +185,17 @@ export function SlopToy() {
 
   return (
     <div className="toy">
+      {/* On wide screens the editor column is sticky, so it stays in view beside a long findings list. */}
       <div className="toy-input">
-        <div className="segmented" role="group" aria-label="Sample code">
-          <button type="button" aria-pressed={preset === 'slop'} onClick={() => load(SLOP_SAMPLE)}>Generic hero</button>
-          <button type="button" aria-pressed={preset === 'fitted'} onClick={() => load(FITTED_SAMPLE)}>Fitted version</button>
-        </div>
-        <label htmlFor="toy-code" className="toy-label">Code to scan <span>(edit it, or paste your own JSX or CSS)</span></label>
+        {head}
+        <div className="toy-window">
+          <div className="toy-bar">
+            <label htmlFor="toy-code" className="toy-label"><span className="visually-hidden">Code to scan, </span>Hero.tsx</label>
+            <div className="segmented" role="group" aria-label="Sample code">
+              <button type="button" aria-pressed={preset === 'slop'} onClick={() => load(SLOP_SAMPLE)}>Generic</button>
+              <button type="button" aria-pressed={preset === 'fitted'} onClick={() => load(FITTED_SAMPLE)}>Fitted</button>
+            </div>
+          </div>
         {/* A mirror behind a transparent textarea draws line numbers and flagged-line highlights. Both share one
             grid cell and the same type and padding, so they wrap identically; the editor scrolls as one. */}
         <div className="toy-editor">
@@ -201,11 +207,14 @@ export function SlopToy() {
           <textarea id="toy-code" className="toy-code" ref={area} value={code} onChange={(e) => { setCode(e.target.value); setActive(0); }}
             spellCheck={false} autoCapitalize="off" autoCorrect="off" />
         </div>
+        </div>
+        <p className="toy-hint">Edit the code or paste your own JSX or CSS. Findings update as you type.</p>
       </div>
       <div className="toy-output">
         <p className="toy-count" role="status">
           <strong>{findings.length}</strong>{findings.length === 1 ? 'tell' : 'tells'} from {groups.length} of the detector’s {RULES.length} rules
         </p>
+        <span className="toy-meter" aria-hidden="true"><i style={{ '--v': groups.length / RULES.length } as CSSProperties} /></span>
         {findings.length ? (
           <>
             <ol className="toy-findings" ref={list} tabIndex={-1} aria-label="Findings">
@@ -220,7 +229,7 @@ export function SlopToy() {
                     ))}
                   </p>
                   <p className="toy-match">{g.matches.map((m) => <code key={m}>{m}</code>)}</p>
-                  <p>{g.suggestion}</p>
+                  <p className="toy-fix"><span aria-hidden="true">→ </span>{g.suggestion}</p>
                 </li>
               ))}
             </ol>
@@ -257,25 +266,33 @@ export function Compare({ id, name }: { id: string; name: string }) {
 
   return (
     <figure className="compare">
-      <div ref={view} className={`compare-view is-${size}`} style={{ '--pos': `${pos}%` } as CSSProperties}
-        onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); fromPointer(e); }}
-        onPointerMove={(e) => { if (e.currentTarget.hasPointerCapture(e.pointerId)) fromPointer(e); }}>
-        <img src={src('before')} width={s.w} height={s.h} loading="lazy" draggable={false} alt={`Before: ${name}, first screen at ${size} px.`} />
-        <img src={src('after')} width={s.w} height={s.h} loading="lazy" draggable={false} alt={`After: ${name}, first screen at ${size} px.`} className="compare-after" />
-        <span className="compare-handle" aria-hidden="true"><ChevronsLeftRight size={18} /></span>
-        <span className="compare-tag is-before" aria-hidden="true">Before</span>
-        <span className="compare-tag is-after" aria-hidden="true">After</span>
+      {/* A window frame: the Before/After legend sits in its bar, so nothing covers the capture itself. */}
+      <div className={`compare-frame is-${size}`}>
+        <div className="compare-bar" aria-hidden="true">
+          <span className="compare-tag is-before">Before</span>
+          <span className="compare-name">{name} · {size} px</span>
+          <span className="compare-tag is-after">After</span>
+        </div>
+        <div ref={view} className="compare-view" style={{ '--pos': `${pos}%` } as CSSProperties}
+          onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); fromPointer(e); }}
+          onPointerMove={(e) => { if (e.currentTarget.hasPointerCapture(e.pointerId)) fromPointer(e); }}>
+          <img src={src('before')} width={s.w} height={s.h} loading="lazy" draggable={false} alt={`Before: ${name}, first screen at ${size} px.`} />
+          <img src={src('after')} width={s.w} height={s.h} loading="lazy" draggable={false} alt={`After: ${name}, first screen at ${size} px.`} className="compare-after" />
+          <span className="compare-handle" aria-hidden="true"><ChevronsLeftRight size={18} /></span>
+        </div>
       </div>
       <figcaption className="compare-controls">
         <label className="compare-range">
-          <span>Divider: before on the left, after on the right</span>
+          <span className="visually-hidden">Divider position: before on the left, after on the right</span>
+          <span className="compare-end" aria-hidden="true">Before</span>
           <input type="range" min={0} max={100} value={pos} onChange={(e) => setPos(+e.target.value)}
             aria-valuetext={`${pos}% before, ${100 - pos}% after`} />
+          <span className="compare-end" aria-hidden="true">After</span>
         </label>
         <div className="segmented" role="group" aria-label="Screen width">
           {([1440, 360] as const).map((k) => {
             const { label, Icon } = SIZES[k];
-            return <button key={k} type="button" aria-pressed={size === k} onClick={() => setSize(k)}><Icon aria-hidden size={16} />{label}, {k} px</button>;
+            return <button key={k} type="button" aria-pressed={size === k} onClick={() => setSize(k)}><Icon aria-hidden size={16} />{label}</button>;
           })}
         </div>
       </figcaption>

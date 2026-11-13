@@ -1,6 +1,7 @@
 import { StrictMode, useEffect, useRef, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Link, usePath } from './router';
+import { Link, usePath, href } from './router';
+import { Download } from 'lucide-react';
 import { DOCS } from './routes';
 import { Home } from './pages/Home';
 import { DocsIndex, DocPage } from './pages/Docs';
@@ -11,6 +12,9 @@ import { Expenses } from './demos/expenses/Expenses';
 import '@fontsource/ibm-plex-sans/latin-400.css';
 import '@fontsource/ibm-plex-sans/latin-500.css';
 import '@fontsource/ibm-plex-sans/latin-600.css';
+// Greek, for πρέπον in the hero label and the name entry (otherwise it falls back to a system face).
+import '@fontsource/ibm-plex-sans/greek-400.css';
+import '@fontsource/ibm-plex-sans/greek-500.css';
 import './styles.css';
 
 function page(path: string): [string, ReactNode] {
@@ -45,7 +49,7 @@ function App() {
   }, [path, title]);
 
   const section = '/' + (path.split('/')[1] ?? '');
-  const nav = [['/docs', 'Docs'], ['/demo', 'Demo screens'], ['/gallery', 'Gallery']];
+  const nav = [['/docs', 'Docs'], ['/demo', 'Demo screens'], ['/gallery', 'Before/after']];
 
   // The demos are their own made-up products, so they render without the site's header and footer.
   if (/^\/demo\/(fleet|permit|expenses)(\/|$)/.test(path)) return <div ref={main}>{content}</div>;
@@ -55,15 +59,25 @@ function App() {
       <a className="skip" href="#main">Skip to content</a>
       <header className="site-header">
         <div className="wrap header-row">
-          <Link to="/" className="wordmark"><span className="wordmark-mark" aria-hidden="true">π</span>Prepon <span className="wordmark-greek" lang="grc">πρέπον</span></Link>
+          <div className="brand">
+            <Link to="/" className="wordmark"><span className="wordmark-mark" aria-hidden="true">π</span>Prepon</Link>
+            <span className="header-version">v0.1.0</span>
+          </div>
           <nav className="site-nav" aria-label="Site">
             <ul>
               {nav.map(([to, label]) => (
-                <li key={to}><Link to={to} className={section === to ? 'is-current' : undefined}>{label}</Link></li>
+                <li key={to}><Link to={to} className={section === to ? 'is-current' : undefined} aria-current={section === to ? 'page' : undefined}>{label}</Link></li>
               ))}
-              <li><a href="https://github.com/PatriusCastro/prepon">GitHub</a></li>
             </ul>
           </nav>
+          <div className="header-actions">
+            <a className="header-icon" href="https://github.com/PatriusCastro/prepon" aria-label="Prepon on GitHub" title="Prepon on GitHub">
+              {/* GitHub's mark (octicons, MIT); lucide no longer ships brand icons. */}
+              <svg aria-hidden="true" viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z" /></svg>
+            </a>
+            {/* Plain anchor: on other pages it loads the home page at the install section. */}
+            <a className="btn btn-primary header-cta" href={path === '/' ? '#install' : `${href('/')}#install`}><Download aria-hidden size={16} />Install</a>
+          </div>
         </div>
       </header>
       <main id="main" ref={main}>{content}</main>

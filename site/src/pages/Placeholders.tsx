@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ExternalLink, Monitor, RotateCw, Smartphone, Tablet } from 'lucide-react';
 import { Link, href } from '../router';
+import { DOCS } from '../routes';
 import { Compare } from '../showcase';
 import { COMPARISONS } from '../content/showcase';
+import { useInView } from '../ui';
 
 type Demo = { id: string; name: string; type: string; shows: string; screens: [string, string][] };
 
@@ -27,9 +29,9 @@ type Device = keyof typeof DEVICES;
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 
-function Segmented<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: [T, ReactNode][]; onChange: (v: T) => void }) {
+function Segmented<T extends string>({ label, value, options, onChange, className = 'segmented' }: { label: string; value: T; options: [T, ReactNode][]; onChange: (v: T) => void; className?: string }) {
   return (
-    <div className="segmented" role="group" aria-label={label}>
+    <div className={className} role="group" aria-label={label}>
       {options.map(([v, content]) => <button key={v} type="button" aria-pressed={value === v} onClick={() => onChange(v)}>{content}</button>)}
     </div>
   );
@@ -74,7 +76,7 @@ function DemoViewer() {
 
   return (
     <section className="viewer" aria-label="Live preview">
-      <Segmented label="Demo" value={demo.id} onChange={(id) => pick(DEMOS.find((d) => d.id === id)!)}
+      <Segmented label="Demo" className="demo-picker" value={demo.id} onChange={(id) => pick(DEMOS.find((d) => d.id === id)!)}
         options={DEMOS.map((d) => [d.id, d.name])} />
       <div className="viewer-info">
         <p className="demo-meta"><span>{demo.type}</span></p>
@@ -82,10 +84,8 @@ function DemoViewer() {
       </div>
       <div className="viewer-bar">
         <div className="viewer-screens">
-          <span>Jump to</span>
-          {demo.screens.map(([to, label]) => (
-            <button key={to} type="button" className="btn btn-quiet" aria-pressed={path === to} onClick={() => go(to)}>{label}</button>
-          ))}
+          <span aria-hidden="true">Screen</span>
+          <Segmented label="Screen" value={path} onChange={go} options={demo.screens.map(([to, label]) => [to, label] as [string, ReactNode])} />
         </div>
         <Segmented label="Device width" value={device} onChange={setDevice}
           options={(Object.keys(DEVICES) as Device[]).map((k) => {
@@ -120,8 +120,10 @@ function DemoViewer() {
 export function DemoIndex() {
   return (
     <div className="wrap page">
-      <h1 tabIndex={-1}>Demo screens</h1>
-      <p className="lede prose">Three made-up enterprise products, built or fixed with Prepon. They run live below: click through them, switch the device width, or open one full page.</p>
+      <header className="page-head is-row">
+        <h1 tabIndex={-1}>Demo screens</h1>
+        <p className="lede">Three made-up enterprise products, built or fixed with Prepon. They run live below: click through them, switch the device width, or open one full page.</p>
+      </header>
       <DemoViewer />
       <p className="prose">The <Link to="/docs/project-types">project types</Link> page describes what Prepon looks for in each kind of screen, and the <Link to="/gallery">gallery</Link> shows each demo before and after.</p>
     </div>
@@ -129,17 +131,21 @@ export function DemoIndex() {
 }
 
 export function Gallery() {
+  // Each capture's divider sweeps once when it first comes on screen, to show it can be dragged.
+  useInView('.compare');
   return (
     <div className="wrap page">
-      <h1 tabIndex={-1}>Before/after gallery</h1>
-      <div className="prose">
+      <header className="page-head is-row">
+        <h1 tabIndex={-1}>Before/after gallery</h1>
         <p className="lede">Captures from Prepon runs on the three demo screens, cropped to the first screen at 1440 and 360 px. Each note comes from that run’s own change summary.</p>
         <p>Prepon’s rule is never to describe a visual result nobody has seen, so every image here is a real capture taken during the run. The procedure is in <Link to="/docs/before-after">Before and after</Link>.</p>
-      </div>
+      </header>
       {COMPARISONS.map((c) => (
         <section key={c.id} className="gallery-item" aria-labelledby={`g-${c.id}`}>
-          <h2 id={`g-${c.id}`}>{c.name}</h2>
-          <p className="demo-meta"><span>Run: {c.run}</span> <span aria-hidden="true">·</span> <Link to={c.route}>Open the demo</Link></p>
+          <div className="gallery-head">
+            <h2 id={`g-${c.id}`}>{c.name}</h2>
+            <p className="demo-meta"><span>Run: {c.run}</span> <span aria-hidden="true">·</span> <Link to={c.route}>Open the demo</Link></p>
+          </div>
           <Compare id={c.id} name={c.name} />
           <ul className="gallery-notes">{c.notes.map((n) => <li key={n}>{n}</li>)}</ul>
         </section>
@@ -151,8 +157,18 @@ export function Gallery() {
 export function NotFound() {
   return (
     <div className="wrap page">
-      <h1 tabIndex={-1}>Page not found</h1>
-      <p className="prose">There’s no page at this address. It may have moved when the docs were reorganized. Try the <Link to="/docs">docs index</Link> or the <Link to="/">home page</Link>.</p>
+      <header className="page-head">
+        <h1 tabIndex={-1}>Page not found</h1>
+        <p className="lede">There’s no page at this address. It may have moved when the docs were reorganized.</p>
+      </header>
+      <p className="page-actions">
+        <Link to="/docs" className="btn btn-primary">Docs index</Link>
+        <Link to="/" className="btn">Home page</Link>
+      </p>
+      <section className="lost" aria-labelledby="lost-h">
+        <h2 id="lost-h">Docs pages</h2>
+        <ul>{DOCS.map((d) => <li key={d.slug}><Link to={`/docs/${d.slug}`}>{d.title}</Link></li>)}</ul>
+      </section>
     </div>
   );
 }
