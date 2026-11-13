@@ -5,6 +5,9 @@ All notable changes to this project are documented here. Versions follow [Semant
 ## [Unreleased]
 
 ### Added
+- Six generated-copy rules in `detect-slop.js` (53 rules now): `ai-vocabulary`, `assistant-leak`, `vague-error`, `vague-link`, `fragment-triplet`, and `exclaim-copy`, plus six copy judgment tells in `slop-patterns.md` (lists of three, title case, interface-describing copy, padding, slogans, repeated sentence shapes).
+- `ux-writing.md` reference: voice and plain language, labels, buttons and links, errors, empty, loading and success states, and confirmations, each rule cited to NN/g, WCAG 2.2, GOV.UK, Digital.gov, Apple HIG, or Baymard. Build and audit read it, and the self-review checklist checks copy.
+- Usability heuristics section in `ux-laws.md`: Nielsen's ten as project rules, with a check and a common misuse for each. Audits walk the main flow against them and cite the heuristic (H1–H10) on each finding it explains.
 - Interaction cost rule in `ux-laws.md`: count the steps on the top tasks and cut them, keeping protective steps. Audits now include a Task steps table, and build reports the main task's step count (before → after) and checks it in the self-review checklist.
 - `motion-perf.js`: measures motion on a slow phone. Loads routes at 360 px with the CPU throttled (`--cpu 4` or `6`), traces idle and a scroll and counts the frames the compositor dropped, and reports `dropped-frames`, `long-frame` (with the scripts blamed), `main-thread-animation`, `offscreen-animation`, and `heavy-layer`. Audit, fix, and build run it when motion is involved.
 - Opportunities in audits: improvements that aren't defects (most often motion that could run on the compositor, or feedback that's missing) are listed as O1, O2… in their own section, without changing the score. `fix` applies them only when they're named. Audits also gain a "Motion on a slow phone" table.

@@ -18,6 +18,7 @@ This file has no definitions. You already know them. For each law it gives when 
 - [Peak-end rule](#peak-end-rule)
 - [Aesthetic-usability effect](#aesthetic-usability-effect)
 - [Gestalt principles](#gestalt-principles)
+- [Usability heuristics](#usability-heuristics)
 
 ---
 
@@ -164,3 +165,20 @@ This file has no definitions. You already know them. For each law it gives when 
 | Closure and figure-ground | Users complete partial shapes and separate foreground from background. Overlays, sheets, and modals need clear separation from the content behind them. | Check that modals have a scrim and focus is trapped. Check that the sheet edge is visible against the page. | Low-contrast overlays that make it unclear what is interactive. |
 | Uniform connectedness | Visual connections (lines, shared containers) show relationships more strongly than proximity does. Use them for steppers, timelines, and related fields. | In a stepper, do the lines and states make the order and current step obvious without reading the labels? | Decorative lines that imply relationships that don't exist. |
 | Prägnanz (simplicity) | People read the simplest structure available. Prefer simple, regular layouts that make the structure obvious. | Can you describe the layout of the screen in one sentence? | Complex asymmetric layouts in task-focused enterprise screens. |
+
+## Usability heuristics
+
+**Applies when** reviewing any screen or flow, and in every audit. Nielsen's ten heuristics are the most widely used checklist for interaction problems; each row gives the rule it implies for these projects and what to look for. In an audit, cite the heuristic by number and name (for example "H5 Error prevention") next to the finding it explains. (Source: Nielsen Norman Group, https://www.nngroup.com/articles/ten-usability-heuristics/)
+
+| Heuristic | Rule here | Check | Common misuse |
+|---|---|---|---|
+| H1 Visibility of system status | Every action gets feedback within about 100 ms; anything over a second shows what is happening; saves, sends, and payments end in an explicit state with a reference. | Tap each action on a throttled connection. Does something change at once? Is the end state unmistakable? | A spinner with no words for a 20-second upload, or a toast that vanishes before it's read. |
+| H2 Match with the real world | Use the user's vocabulary, units, date and currency formats, and the order of the paper form or process they already know. | Read the labels to someone from the domain. Note any word they'd translate. | Database field names and internal status codes in the UI. |
+| H3 User control and freedom | Back works, drafts save, and reversible actions offer undo. Multi-step flows can be left and resumed. | Press back on every step, reload mid-flow, and undo the last action. What was lost? | A wizard that clears every answer on back, or "Are you sure?" instead of undo. |
+| H4 Consistency and standards | Same word, same control, same place for the same thing, inside the product and with the platform. | Run scan-consistency.js and compare wording of the same concept across screens (consistency.md). | A new button variant or synonym on each screen. |
+| H5 Error prevention | Constrain input instead of rejecting it: the right keyboard (`inputmode`), sensible defaults, disabled-but-explained options, and review before irreversible steps. | List every error message the flow can show. Which could the design have made impossible? | Free-text fields for values with a known set, then a validation error. |
+| H6 Recognition rather than recall | Show options, earlier answers, and recent items instead of making people remember them. | Note every moment the user must bring a value from elsewhere (see Miller's law). | Codes the user must look up on another screen and retype. |
+| H7 Flexibility and efficiency | Shortcuts for frequent users that don't get in the way of new ones: saved filters, bulk actions, keyboard shortcuts in desktop tools, recent and favourite items. | Do the top task as an expert user. Count steps (Interaction cost). | Hiding the novice path behind shortcuts, or offering nothing for the daily user. |
+| H8 Aesthetic and minimalist design | Every element on the first screen serves the screen's job (hierarchy.md); secondary content moves down or behind disclosure. | Remove each element in turn. Does the task get harder? If not, it goes. | Minimalism as hiding: removing labels, icon names, or needed context to look clean. |
+| H9 Recognize, diagnose, recover from errors | Errors in plain words, next to the cause, with the fix, and the user's work kept (ux-writing.md). | Trigger each error. Can a first-time user recover without help? | "Something went wrong" with no next step. |
+| H10 Help and documentation | Help at the point of need: helper text, an inline "What's this?", a link to the specific guidance, a contact route for government and banking. | For each field a novice might not understand, is the explanation on the screen? | A help centre link as the only help, or tooltips on touch-only screens. |

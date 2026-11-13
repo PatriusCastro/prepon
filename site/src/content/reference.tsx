@@ -87,6 +87,16 @@ const MECHANICAL: [string, ReactNode, string][] = [
   ['decorative-motion', <><code>animate-bounce</code> or <code>animate-ping</code> as decoration.</>, 'Motion only for cause and effect, respecting prefers-reduced-motion.'],
   ['hardcoded-color', 'Hex colors in component code instead of tokens.', 'Use or add a theme token. Hardcoded colors are how a system drifts into twenty slightly different blues.'],
   ['placeholder-label', 'Inputs whose only label is the placeholder.', 'A visible label above the field and format hints below. Placeholders vanish exactly when people need them.'],
+  // prepon-ignore ai-vocabulary
+  ['ai-vocabulary', '“Delve,” “tapestry,” “a testament to,” “in today’s fast-paced world,” “harness the power,” “look no further,” “all-in-one.”', 'The plain word, or cut the phrase. Most of these sentences survive with it deleted.'],
+  // prepon-ignore assistant-leak
+  ['assistant-leak', '“I hope this helps,” “Great question,” “Feel free to,” “Let’s dive in” in interface copy.', 'Write what the product would say in that spot. Interfaces don’t make small talk.'],
+  // prepon-ignore vague-error
+  ['vague-error', '“Oops!”, “Something went wrong,” “An error occurred.”', 'Say what failed, whether the user’s work was kept, and what to do next.'],
+  ['vague-link', 'Links that say “click here,” “read more,” or “learn more.”', 'Link text that names the destination. Screen reader users scan links out of context (WCAG 2.4.4).'],
+  // prepon-ignore fragment-triplet
+  ['fragment-triplet', '“Fast. Simple. Secure.”', 'One sentence that says what is fast, for whom, and how they’d know.'],
+  ['exclaim-copy', 'Exclamation marks across the interface: “Success!”, “You’re all set!”', 'Drop them. Calm, exact wording reads as competent, especially on errors and payments.'],
 ];
 
 const JUDGMENT: [string, string][] = [
@@ -100,6 +110,7 @@ const JUDGMENT: [string, string][] = [
   ['An icon on every label and menu item.', 'Icons where they speed recognition; plain text elsewhere.'],
   ['Badges and chips everywhere.', 'Reserve chips for status and filters.'],
   ['Fake round data (“$12,345”, “98%”).', 'Realistic values: long names, zeros, negative amounts, missing data.'],
+  // prepon-ignore vague-error
   ['Friendly-generic microcopy (“Oops! Something went wrong”).', 'Say what happened, whether data was saved, and what to do next.'],
   ['Hover-only affordances.', 'Visible actions, or an explicit menu. Touch screens have no hover.'],
   ['Abstract people or blobs in empty states.', 'A sentence on why it’s empty, plus the action that fills it.'],

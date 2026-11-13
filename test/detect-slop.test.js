@@ -44,11 +44,13 @@ const TEMPLATE_CSS = '.c{box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04); back
 const TEMPLATE_TSX = '<p className="eyebrow">a</p><h2>A</h2><p className="eyebrow">b</p><h2>B</h2><p className="text-xs uppercase tracking-widest">c</p>';
 const PERF_CSS = '.p{transition: height 200ms, opacity 200ms} @keyframes glow{0%{box-shadow:0 0 4px red}100%{box-shadow:0 0 12px red}} .w1{will-change:transform}.w2{will-change:transform}.w3{will-change:opacity}.w4{will-change:transform}';
 const PERF_TSX = "window.addEventListener('scroll', onScroll);\nel.addEventListener('touchmove', (e) => { e.preventDefault(); });";
+const COPY_TSX = '<p>Delve into a tapestry of features.</p><p>I hope this helps!</p><p>Oops! Something went wrong.</p><a href="/fees">Learn more</a><p>Fast. Simple. Secure.</p><p>Saved!</p><p>Done!</p>';
 const CARDS ='<Card><Card>inner</Card></Card>\n' + Array.from({ length: 6 }, () => '<div className="rounded-xl border p-4">x</div>').join('\n');
 
 test('every rule fires on the slop fixture or the css fixture', () => {
   const hits = new Set([
     ...run('Cards.tsx', CARDS),
+    ...run('Copy.tsx', COPY_TSX),
     ...run('perf.css', PERF_CSS),
     ...run('Perf.tsx', PERF_TSX),
     ...run('t.css', TEMPLATE_CSS),
@@ -122,6 +124,17 @@ test('template rules: flag the premium-dark kit, leave plain borders, shadows an
   const ok = '.a{box-shadow: inset 0 1px 0 rgb(0 0 0 / .1), 0 1px 2px rgb(0 0 0/.05)} .b{background: linear-gradient(90deg, var(--accent), var(--accent-2))} .c{border-top: 1px solid var(--line)} .d:hover{background: var(--sunk)} .e{transform: translateY(-2px)} .f:hover{transform: translateX(2px)}';
   assert.deepStrictEqual(run('ok.css', ok), []);
   assert.deepStrictEqual(run('One.tsx', '<p className="eyebrow">Step 2 of 4</p><h1>Your business</h1><p className="eyebrow">Draft</p>'), []);
+});
+
+test('copy rules: generated-copy tells flagged, plain product copy and code pass', () => {
+  assert.deepStrictEqual(run('Err.tsx', '<p>Uh-oh, an unexpected error occurred.</p>'), ['vague-error', 'vague-error']);
+  assert.deepStrictEqual(run('Link.html', '<a href="/x">click here</a>'), ['vague-link']);
+  assert.deepStrictEqual(run('Two.tsx', '<p>Saved!</p><p>Sent!</p>'), []);
+  const ok = `const total = items!.length; if (!ok) return;
+<p>Payment not sent. Your form is saved. Check your connection and try again.</p>
+<a href="/fees">Read the fee schedule</a><a aria-label="Learn more about refunds" href="/r">Learn more</a>
+<p>Most permits are approved within two working days.</p>`;
+  assert.deepStrictEqual(run('Ok.tsx', ok), []);
 });
 
 test('card rules: five cards is fine, six is spam, nesting always flagged', () => {

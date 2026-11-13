@@ -225,6 +225,45 @@ const RULES = [
     pattern: /\bNot (?:just |only |another )?(?:a|an)\s+[\w-]+(?:\s[\w-]+){0,3}[.,]\s+(?:It's\s+|It is\s+)?(?:[Aa]n?|[Tt]he)\s+\w/g,
     suggestion: 'State what it does directly; "Not a feature. A platform." framing says nothing.',
   },
+  // Generated-copy tells: the words and shapes language models reach for when nobody wrote the copy.
+  {
+    id: 'ai-vocabulary',
+    exts: [...CODE, 'html'],
+    pattern: /\b(?:delv(?:e|es|ed|ing)|tapestry|testament to|in the realm of|ever-evolving|in today['’]s (?:fast-paced|digital|modern|ever-changing)|a myriad of|embark on|unleash|harness(?:ing)? the (?:power|potential)|look no further|navigat(?:e|ing) the complexit(?:y|ies)|it['’]s worth noting|at the forefront|game-?changing|meticulous(?:ly)?|all-in-one|one-stop[- ]shop)(?![\w-])/gi,
+    suggestion: 'Use the plain word ("look at", "use", "many") or cut the phrase; name the task and the result instead.',
+  },
+  {
+    id: 'assistant-leak',
+    exts: [...CODE, 'html'],
+    pattern: /\b(?:as an AI(?: language model)?|I hope this helps|great question|certainly!|feel free to|let['’]s dive in|happy to help|here['’]s (?:a|an|the) (?:breakdown|overview|quick look))(?!\w)/gi,
+    suggestion: 'Chat-assistant phrasing leaked into the UI. Write the label or message the product would say: short, direct, no small talk.',
+  },
+  {
+    id: 'vague-error',
+    exts: [...CODE, 'html'],
+    pattern: /\b(?:oops|whoops|uh[- ]oh|yikes|something went wrong|an? (?:unexpected |unknown )?error (?:has )?occurred|unexpected error)(?!\w)/gi,
+    suggestion: 'Say what failed, whether the user\'s data was kept, and what to do next ("Payment not sent. Your form is saved. Check your connection and try again.").',
+  },
+  {
+    id: 'vague-link',
+    exts: [...CODE, 'html'],
+    pattern: /<(?:a|Link|NavLink)\b[^<>]*>\s*(?:click here|here|read more|learn more|more|this link)\s*<\//gi,
+    unless: /aria-label/,
+    suggestion: 'Make the link text name its destination ("Read the fee schedule"); "click here" is meaningless out of context (WCAG 2.4.4).',
+  },
+  {
+    id: 'fragment-triplet',
+    exts: [...CODE, 'html'],
+    pattern: /(?<![\w.])[A-Z][a-z]{2,}\.\s+[A-Z][a-z]{2,}\.\s+[A-Z][a-z]{2,}\.(?![\w.])/g,
+    suggestion: 'Replace "Fast. Simple. Secure." with one sentence that says what is fast, for whom, and how you know.',
+  },
+  {
+    id: 'exclaim-copy',
+    exts: [...CODE, 'html'],
+    minCount: 3,
+    pattern: /\p{L}!+(?=\s*(?:<|["'`]))/gu,
+    suggestion: 'Drop the exclamation marks; calm, exact wording reads as trustworthy, and a success state carries itself.',
+  },
   {
     id: 'justified-text',
     pattern: /\btext-justify\b|text-align\s*:\s*justify\b|textAlign\s*:\s*['"]justify['"]/g,

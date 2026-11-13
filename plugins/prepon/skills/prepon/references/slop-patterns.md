@@ -170,6 +170,32 @@ Bottom borders for active tabs and input underlines are a different, conventiona
 **Tell.** Inputs whose only label is the placeholder.
 **Instead.** Use a visible label above the field, with helper text below for format hints. Placeholders vanish when typing begins, which is exactly when users with memory or attention difficulties need them.
 
+**Generated copy.** The next six are generated-copy tells: the words and sentence shapes a language model reaches for when nobody wrote the copy. Users can't name them, but they read the page as unattended, and in government and banking that costs trust. Like `filler-copy`, they scan strings, JSX text, and comments.
+
+### ai-vocabulary
+**Tell.** Words and phrases that show up far more in generated text than in human product copy: "delve," "tapestry," "a testament to," "in the realm of," "ever-evolving," "in today's fast-paced world," "a myriad of," "embark on," "unleash," "harness the power," "look no further," "navigate the complexities," "it's worth noting," "at the forefront," "game-changing," "meticulous," "all-in-one," "one-stop shop."
+**Instead.** Use the plain word ("look at," "use," "many") or cut the phrase. Most of these sentences survive with the phrase deleted, which shows it carried nothing.
+
+### assistant-leak
+**Tell.** Chat-assistant phrasing in interface copy: "As an AI language model," "I hope this helps," "Great question," "Certainly!," "Feel free to," "Let's dive in," "Happy to help," "Here's a quick overview."
+**Instead.** Write what the product would say in that spot: a label, an instruction, or a message. Interfaces don't make small talk. If a real AI feature speaks in chat, give it a voice in the brand guide rather than the model's default.
+
+### vague-error
+**Tell.** "Oops!", "Uh-oh," "Something went wrong," "An error occurred," "Unexpected error."
+**Instead.** Say what failed, whether the user's work was kept, and what to do next: "Payment not sent. Your form is saved. Check your connection and try again." In code that genuinely can't know the cause (a last-resort error boundary), still say whether data was saved and offer the next step, then suppress with that reason.
+
+### vague-link
+**Tell.** Links whose text is "click here," "here," "read more," "learn more," or "more."
+**Instead.** Make the link text name where it goes ("Read the fee schedule," "See how refunds work"). Screen reader users often move through a list of links out of context, where "learn more" six times is useless (WCAG 2.4.4). An `aria-label` that names the destination also clears the finding, but visible text that does is better for everyone.
+
+### fragment-triplet
+**Tell.** Three one-word sentences in a row: "Fast. Simple. Secure." The rhythm is a generated-copy signature, and it claims qualities without evidence.
+**Instead.** One plain sentence that says what is fast, for whom, and how they'd know: "Most permits are approved within two working days."
+
+### exclaim-copy
+**Tell.** Exclamation marks across the interface (three or more in one file): "Success!", "You're all set!", "Welcome back!"
+**Instead.** Drop them. A success state carries itself with a clear heading and what happens next. Calm, exact wording reads as competent, and an exclamation in an error or a payment confirmation reads as flippant.
+
 The next five are the current "premium dark" template: the look that replaced purple gradients once those became a known tell. Any one is fine on its own. Together they are the default.
 
 ### sheen-edge
@@ -249,6 +275,12 @@ These need a reviewer's eye. Check them in every audit and before you finish eve
 | Dark mode built from glowing accents and colored shadows. | Glow reads as decoration and lowers text contrast. | Keep the dark theme; use flat accents and surface steps for depth. |
 | Grey text on a colored background. | Neutral grey on color looks muddy and often fails contrast. | Use a darker or lighter tint of the background's own hue, then check contrast. |
 | Body text in all caps, or headings that skip levels (h1 straight to h4). | Caps slow reading; skipped levels break screen reader navigation. | Sentence case for running text; heading levels that follow the structure. |
+| Lists of three everywhere ("fast, secure, and reliable"; three bullets per card, three cards per row). | The rule of three is a generation habit; the third item is usually filler added for rhythm. | Keep the items that are true and specific, however many that is. Two concrete claims beat three vague ones. |
+| Title Case On Every Button, Label, And Heading. | It reads as a template and slows reading; most current design systems use sentence case. | Sentence case for UI text, unless the brand guide says otherwise. Keep proper nouns capitalised. |
+| Copy that describes the interface instead of the task ("Use the form below to submit your application"). | The user can see the form. The sentence delays the one they need. | Lead with the task or the condition: "You'll need your business registration number." |
+| Hedged or padded sentences ("You may be able to," "In order to," "Please note that," "simply"). | Padding makes instructions longer and less certain. "Simply" tells a struggling user the task is easy. | Cut to the instruction: "To renew, upload your current permit." Delete "simply" and "just." |
+| Copy written about the user in the third person or as a slogan ("Empowering citizens to…"). | It's addressed to an investor, not the person on the screen. | Address the user directly ("you") with what they can do here. |
+| The same sentence shape repeated down a page (every card: verb, benefit, colon, detail). | Uniform rhythm is how generated copy sounds when read aloud. | Vary length and shape by what each item needs to say; read the page aloud once. |
 | Calling a problem "theater" ("security theater", "productivity theater"). | It's a dismissive stock phrase, not an explanation. | Name the actual problem and what it costs the user. |
 
 ---
