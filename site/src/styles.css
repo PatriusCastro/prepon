@@ -28,6 +28,7 @@
   /* Type: one family for UI and text, plus a monospace for code. */
   --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --t-xs: 0.75rem;                                      /* 12: labels over link lists, so they don't read as links */
   --t-sm: 0.875rem;                                     /* 14: captions, tables, UI chrome */
   --t-md: clamp(1rem, 0.97rem + 0.12vw, 1.0625rem);     /* 16 → 17: body */
   --t-lg: 1.25rem;                                      /* 20: lede, h3 */
@@ -764,8 +765,9 @@ body:has(.hero) .entry h2 { font-size: clamp(3.5rem, 2rem + 6vw, 7rem); font-wei
 .docs-toc summary { min-height: var(--target); display: flex; align-items: center; padding-inline: var(--s-4); cursor: pointer; font: 500 var(--t-sm)/1 var(--mono); color: var(--soft); }
 .docs-toc nav { padding: 0 var(--s-2) var(--s-3); }
 .docs-nav-group + .docs-nav-group { margin-top: var(--s-5); }
-.docs-nav-group > p { font: var(--t-sm)/1.4 var(--mono); color: var(--muted); padding-inline: var(--s-3); margin-bottom: var(--s-2); }
-.docs-nav-group ul { list-style: none; padding: 0; }
+.docs-nav-group > p { font: var(--t-xs)/1.4 var(--mono); color: var(--muted); padding-inline: var(--s-3); margin-bottom: var(--s-2); }
+/* A rail under each label ties the pages to their group, the same 1px line as "On this page". */
+.docs-nav-group ul { list-style: none; margin-left: var(--s-3); padding: 0 0 0 var(--s-2); border-left: 1px solid var(--line); }
 .site .docs-nav-group li { margin: 0; }
 .site .docs-nav-group a {
   display: flex; align-items: center; min-height: 2.5rem; padding-inline: var(--s-3);
@@ -804,7 +806,7 @@ body:has(.hero) .entry h2 { font-size: clamp(3.5rem, 2rem + 6vw, 7rem); font-wei
 /* On this page: from 80rem, a third column beside the article; hidden below that, where the page is short enough
    to scroll and the sidebar already sits in a <details>. */
 .docs-onpage { display: none; }
-.docs-onpage p { font: var(--t-sm)/1.4 var(--mono); color: var(--muted); margin-bottom: var(--s-2); }
+.docs-onpage p { font: var(--t-xs)/1.4 var(--mono); color: var(--muted); margin-bottom: var(--s-2); }
 .docs-onpage ul { list-style: none; padding: 0; border-left: 1px solid var(--line); }
 .site .docs-onpage li { margin: 0; }
 .site .docs-onpage a {

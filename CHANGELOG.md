@@ -20,6 +20,7 @@ All notable changes to this project are documented here. Versions follow [Semant
 - `slow-motion` no longer reads `.3s` as 3 s.
 - `em-dash-copy` no longer counts a dash standing alone as an empty-value placeholder (`'—'`, `<td>—</td>`).
 - Site detector editor: rules a visitor's edit trips for the first time are listed first and tagged "new", so they aren't hidden in the collapsed list; the counter reads "19 tells" to screen readers, not "19tells". The Generic sample now includes generated-copy tells.
+- Site docs sidebar: group labels ("Modes", "Reference") and "On this page" drop to 12 px (new `--t-xs` token) so they don't read as links, and each group's pages sit on a 1 px rail under their label.
 
 ## [0.1.0] - 2026-11-12
 
