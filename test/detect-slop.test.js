@@ -165,6 +165,11 @@ test('hook: silent unless opted in, reports findings with exit 2 when on', () =>
   process.stderr.write = () => true;
   try {
     assert.strictEqual(main(event), 0);
+    for (const [value, want] of [['true', 2], ['1', 2], ['false', 0], ['', 0]]) {
+      process.env.CLAUDE_PLUGIN_OPTION_SLOP_HOOK = value;
+      assert.strictEqual(main(event), want, `option "${value}"`);
+    }
+    delete process.env.CLAUDE_PLUGIN_OPTION_SLOP_HOOK;
     fs.mkdirSync(path.join(dir, '.prepon'));
     fs.writeFileSync(path.join(dir, '.prepon', 'hook-on'), '');
     assert.strictEqual(main(event), 2);

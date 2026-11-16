@@ -1,0 +1,22 @@
+name: Latest Claude Code
+
+# Weekly early warning: validate against the newest Claude Code, so a change to the plugin format shows up here
+# (GitHub emails a failed scheduled run) before users hit it. ci.yml stays pinned; bump its pin once this is green.
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Mondays 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  latest-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g @anthropic-ai/claude-code@latest
+      - run: claude --version
+      - run: claude plugin validate .
+      - run: claude plugin validate plugins/prepon
