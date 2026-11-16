@@ -1,0 +1,17 @@
+{
+  "description": "Prepon slop check after UI edits. Does nothing unless the project opts in with .prepon/hook-on or PREPON_HOOK=1.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/prepon/scripts/hook-slop.js\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

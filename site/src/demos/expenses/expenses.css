@@ -1,0 +1,341 @@
+/* Ashby & Lowe expense approvals demo. Every rule is scoped under .expenses, so the showcase site and the other demos are untouched.
+   Tokens first. Contrast (WCAG formula) is listed in the audit's "Fixes applied" section and re-checked by a script.
+   Follows the system theme; light is the default. */
+
+.expenses {
+  --ex-bg: #f4f6f7;
+  --ex-surface: #ffffff;
+  --ex-sunk: #e9edef;
+  --ex-ink: #16202a;
+  --ex-muted: #4a5663;
+  --ex-line: #d9dfe4;          /* dividers, card edges */
+  --ex-line-strong: #6f7b87;   /* control boundaries */
+  --ex-brand: #0b5563;         /* deep teal: primary action, selection, focus, links */
+  --ex-brand-strong: #083f4a;
+  --ex-brand-tint: #e0eff1;
+  --ex-on-brand: #ffffff;
+  --ex-ok: #1b6a3c;  --ex-ok-bg: #e4f3ea;
+  --ex-warn: #8a5100; --ex-warn-bg: #fcf0da;
+  --ex-crit: #b42318; --ex-crit-bg: #fcebe9;
+  --ex-on-dark: #ffffff;        /* text on the demo bar and the toast, in both themes */
+  --ex-demo: #1f2529;--ex-demo-raised: #343c42; --ex-demo-soft: #c6cdd2;
+  --ex-scrim: rgb(10 20 28 / 0.45);
+
+  --ex-font: 'Segoe UI', Roboto, 'Noto Sans', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --ex-t-sm: 0.875rem;  --ex-t-md: 1rem;  --ex-t-lg: 1.125rem;  --ex-t-xl: 1.5rem;
+  --ex-1: 0.25rem; --ex-2: 0.5rem; --ex-3: 0.75rem; --ex-4: 1rem; --ex-5: 1.5rem; --ex-6: 2rem;
+  --ex-r-control: 6px; --ex-r-card: 10px; --ex-r-pill: 999px;
+  --ex-target: 3rem;          /* 48px on phones */
+  --ex-shadow-rest: 0 1px 2px rgb(16 32 48 / 0.06);
+  --ex-shadow-float: 0 8px 24px rgb(16 32 48 / 0.18);
+  --ex-fast: 120ms; --ex-base: 220ms; --ex-ease-out: cubic-bezier(0.2, 0, 0, 1);
+
+  color-scheme: light dark;
+  min-height: 100vh;
+  background: var(--ex-bg);
+  color: var(--ex-ink);
+  font: var(--ex-t-md)/1.5 var(--ex-font);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-color-scheme: dark) {
+  .expenses {
+    --ex-bg: #111518;
+    --ex-surface: #1a2024;
+    --ex-sunk: #242b30;
+    --ex-ink: #e7ecef;
+    --ex-muted: #a8b3bc;
+    --ex-line: #2f383e;
+    --ex-line-strong: #7c8893;
+    --ex-brand: #7fcbd5;
+    --ex-brand-strong: #a3dce3;
+    --ex-brand-tint: #17363b;
+    --ex-on-brand: #062a30;
+    --ex-ok: #82d6a2;  --ex-ok-bg: #15301f;
+    --ex-warn: #f2bd60; --ex-warn-bg: #33260e;
+    --ex-crit: #ff9d92; --ex-crit-bg: #3b1916;
+    --ex-scrim: rgb(0 0 0 / 0.6);
+    --ex-shadow-float: 0 8px 24px rgb(0 0 0 / 0.5);
+  }
+}
+
+/* Reset the site's element styles inside the demo. */
+.expenses h1, .expenses h2, .expenses h3 { font-family: var(--ex-font); font-weight: 600; letter-spacing: 0; line-height: 1.25; }
+.expenses h1 { font-size: var(--ex-t-xl); }
+.expenses h2, .expenses h3 { font-size: var(--ex-t-lg); }
+.expenses ul { list-style: none; padding: 0; margin: 0; }
+.expenses li + li { margin-top: 0; }
+.expenses a { color: var(--ex-brand); text-underline-offset: 0.18em; }
+.expenses :focus-visible { outline: 3px solid var(--ex-brand); outline-offset: 2px; }
+/* The h1 and list heading take focus only so screen readers announce them; they aren't controls. prepon-ignore outline-removed */
+.expenses h1[tabindex='-1']:focus, .expenses h2[tabindex='-1']:focus { outline: none; }
+.expenses .ex-demobar :focus-visible, .expenses .ex-toast :focus-visible { outline-color: var(--ex-demo-soft); }
+.expenses svg { flex: none; width: 1.25rem; height: 1.25rem; }
+.expenses button { font: inherit; color: inherit; }
+
+.expenses .ex-wrap { width: 100%; max-width: 72rem; margin-inline: auto; padding-inline: var(--ex-4); }
+.expenses .ex-muted { color: var(--ex-muted); }
+
+/* Demo bar: same pattern as the fleet and permit demos. */
+.expenses .ex-demobar { background: var(--ex-demo); color: var(--ex-on-dark); font-size: var(--ex-t-sm); }
+.expenses .ex-demobar-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ex-1) var(--ex-4); padding-block: var(--ex-2); }
+.expenses .ex-demobar p { flex: 1 1 18rem; }
+.expenses .ex-demobar-back { display: inline-flex; align-items: center; gap: var(--ex-1); min-height: 2.75rem; color: var(--ex-on-dark); }
+.expenses .ex-demobar-back svg { width: 1rem; height: 1rem; }
+.expenses .ex-demo-state { display: inline-flex; align-items: center; gap: var(--ex-2); color: var(--ex-demo-soft); }
+.expenses .ex-demo-state select {
+  min-height: 2.75rem; padding-inline: var(--ex-2); font: inherit; color: var(--ex-on-dark);
+  background: var(--ex-demo-raised); border: 1px solid var(--ex-demo-soft); border-radius: var(--ex-r-control);
+}
+
+/* App header */
+.expenses .ex-top { background: var(--ex-surface); border-bottom: 1px solid var(--ex-line); }
+.expenses .ex-top-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ex-3); min-height: 3.5rem; }
+.expenses .ex-brand { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--ex-2); font-weight: 600; }
+.expenses .ex-brand-app { color: var(--ex-muted); font-weight: 400; }
+.expenses .ex-mark {
+  display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: var(--ex-r-control);
+  background: var(--ex-brand); color: var(--ex-on-brand); font-size: var(--ex-t-sm); font-weight: 600;
+}
+.expenses .ex-user { display: flex; align-items: center; gap: var(--ex-2); font-size: var(--ex-t-sm); }
+.expenses .ex-avatar {
+  display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: var(--ex-r-pill);
+  background: var(--ex-brand-tint); color: var(--ex-brand); font-weight: 600; font-size: var(--ex-t-sm);
+}
+.expenses .ex-user-name { display: none; }
+
+/* Page */
+/* Bottom padding keeps the end of the list clear of the toast. */
+.expenses .ex-main { padding-block: var(--ex-5) 6rem; }
+.expenses .ex-lede { margin-top: var(--ex-1); color: var(--ex-muted); }
+.expenses .ex-lede strong { color: var(--ex-ink); font-weight: 600; }
+
+.expenses .ex-banner { display: flex; gap: var(--ex-3); align-items: flex-start; padding: var(--ex-3) var(--ex-4); border: 1px solid; border-radius: var(--ex-r-card); }
+.expenses .ex-main > .ex-banner { margin-top: var(--ex-4); }
+.expenses .ex-banner svg { margin-top: 0.1em; }
+.expenses .ex-banner--warn { background: var(--ex-warn-bg); border-color: var(--ex-warn); }
+.expenses .ex-banner--warn svg { color: var(--ex-warn); }
+.expenses .ex-banner--crit { background: var(--ex-crit-bg); border-color: var(--ex-crit); }
+.expenses .ex-banner--crit svg { color: var(--ex-crit); }
+
+/* Filters and search */
+.expenses .ex-tools { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--ex-4); margin-top: var(--ex-5); }
+/* 2×2 on phones so all four views are visible at 320px; one row from 768px. */
+.expenses .ex-tabs {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ex-1); padding: var(--ex-1);
+  background: var(--ex-sunk); border-radius: var(--ex-r-card);
+}
+.expenses .ex-tabs button {
+  flex: 1 0 auto; display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--ex-1) var(--ex-2); min-width: 0;
+  min-height: 2.75rem; padding-inline: var(--ex-3); border: 0; border-radius: var(--ex-r-control);
+  background: transparent; color: var(--ex-muted); font-weight: 600; cursor: pointer;
+  transition: background-color var(--ex-fast), color var(--ex-fast);
+}
+.expenses .ex-tabs button:hover { color: var(--ex-ink); }
+.expenses .ex-tabs [aria-pressed='true'] { background: var(--ex-surface); color: var(--ex-ink); box-shadow: var(--ex-shadow-rest); }
+.expenses .ex-count { min-width: 1.5rem; padding-inline: var(--ex-1); border-radius: var(--ex-r-pill); background: var(--ex-line); color: var(--ex-ink); font-size: var(--ex-t-sm); }
+.expenses .ex-tabs [aria-pressed='true'] .ex-count { background: var(--ex-brand); color: var(--ex-on-brand); }
+
+.expenses .ex-search { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--ex-1); }
+.expenses .ex-search label { font-weight: 600; font-size: var(--ex-t-sm); }
+.expenses .ex-search-box {
+  display: flex; align-items: center; gap: var(--ex-2); min-height: var(--ex-target); padding-inline: var(--ex-3) var(--ex-1);
+  background: var(--ex-surface); border: 1px solid var(--ex-line-strong); border-radius: var(--ex-r-control);
+  transition: border-color var(--ex-fast);
+}
+.expenses .ex-search-box:hover { border-color: var(--ex-ink); }
+.expenses .ex-search-box:has(input:focus-visible) { outline: 3px solid var(--ex-brand); outline-offset: 2px; }
+.expenses .ex-search-box > svg { color: var(--ex-muted); }
+.expenses .ex-search input {
+  flex: 1; min-width: 0; min-height: 2.75rem; border: 0; background: transparent; color: var(--ex-ink); font: inherit;
+  appearance: none;
+}
+/* The box above draws the focus ring for the input. prepon-ignore outline-removed */
+.expenses .ex-search input:focus { outline: none; }
+.expenses .ex-search input::placeholder { color: var(--ex-muted); }
+.expenses .ex-search input::-webkit-search-cancel-button { appearance: none; }
+
+/* Buttons */
+.expenses .ex-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--ex-2);
+  min-height: var(--ex-target); padding: var(--ex-2) var(--ex-4);
+  font-weight: 600; line-height: 1.25; white-space: nowrap; cursor: pointer;
+  border: 1px solid transparent; border-radius: var(--ex-r-control);
+  transition: background-color var(--ex-fast), border-color var(--ex-fast), transform var(--ex-fast);
+}
+.expenses .ex-btn:active { transform: scale(0.98); }
+.expenses .ex-btn--primary { background: var(--ex-brand); color: var(--ex-on-brand); }
+.expenses .ex-btn--primary:hover { background: var(--ex-brand-strong); }
+.expenses .ex-btn--secondary { background: var(--ex-surface); color: var(--ex-ink); border-color: var(--ex-line-strong); }
+.expenses .ex-btn--secondary:hover { background: var(--ex-sunk); }
+.expenses .ex-btn--quiet { background: transparent; color: var(--ex-brand); }
+.expenses .ex-btn--quiet:hover { background: var(--ex-brand-tint); }
+.expenses .ex-btn--danger { background: var(--ex-crit); color: var(--ex-surface); }
+.expenses .ex-btn--danger:hover { filter: brightness(0.92); }
+.expenses .ex-btn--sm { min-height: 2.5rem; padding-inline: var(--ex-3); }
+.expenses .ex-btn--block { width: 100%; }
+.expenses .ex-icon-btn {
+  display: grid; place-items: center; width: 2.75rem; height: 2.75rem; flex: none;
+  background: transparent; border: 0; border-radius: var(--ex-r-control); color: var(--ex-muted); cursor: pointer;
+  transition: background-color var(--ex-fast), color var(--ex-fast);
+}
+.expenses .ex-icon-btn:hover:not(:disabled) { background: var(--ex-sunk); color: var(--ex-ink); }
+.expenses .ex-icon-btn:disabled { opacity: 0.45; cursor: default; }
+
+/* Claim list: one surface, rows split by dividers. */
+.expenses .ex-list { margin-top: var(--ex-4); background: var(--ex-surface); border: 1px solid var(--ex-line); border-radius: var(--ex-r-card); box-shadow: var(--ex-shadow-rest); overflow: hidden; }
+.expenses .ex-row { display: flex; align-items: center; border-top: 1px solid var(--ex-line); }
+.expenses .ex-row:first-child { border-top: 0; }
+.expenses .ex-row-open {
+  flex: 1; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--ex-1) var(--ex-3); align-items: center;
+  padding: var(--ex-3) var(--ex-4); border: 0; background: transparent; text-align: left; cursor: pointer;
+  transition: background-color var(--ex-fast);
+}
+.expenses .ex-row-open:hover { background: var(--ex-sunk); }
+.expenses .ex-row-open:focus-visible { outline-offset: -3px; }
+.expenses .ex-row-who { font-weight: 600; overflow-wrap: anywhere; }
+.expenses .ex-row-amount { font-weight: 600; text-align: right; }
+.expenses .ex-row-meta { color: var(--ex-muted); font-size: var(--ex-t-sm); overflow-wrap: anywhere; }
+.expenses .ex-row-status { justify-self: end; }
+.expenses .ex-flag { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--ex-1); color: var(--ex-warn); font-size: var(--ex-t-sm); font-weight: 600; }
+.expenses .ex-flag svg { width: 1rem; height: 1rem; }
+.expenses .ex-row-actions { display: none; }
+
+/* Status: soft tint, dark same-hue text, and an icon, so it never relies on color. */
+.expenses .ex-pill {
+  display: inline-flex; align-items: center; gap: var(--ex-1); padding: 0.125rem var(--ex-2);
+  border-radius: var(--ex-r-pill); font-size: var(--ex-t-sm); font-weight: 600; white-space: nowrap;
+}
+.expenses .ex-pill svg { width: 1rem; height: 1rem; }
+.expenses .ex-pill--pending { background: var(--ex-warn-bg); color: var(--ex-warn); }
+.expenses .ex-pill--approved { background: var(--ex-ok-bg); color: var(--ex-ok); }
+.expenses .ex-pill--rejected { background: var(--ex-crit-bg); color: var(--ex-crit); }
+
+.expenses .ex-pager { display: grid; gap: var(--ex-3); padding: var(--ex-3) var(--ex-4) var(--ex-4); border-top: 1px solid var(--ex-line); }
+.expenses .ex-pager p { color: var(--ex-muted); font-size: var(--ex-t-sm); }
+.expenses .ex-pager nav { display: flex; align-items: center; gap: var(--ex-1); }
+.expenses .ex-page-btn {
+  min-width: 2.75rem; min-height: 2.75rem; border: 1px solid transparent; border-radius: var(--ex-r-control);
+  background: transparent; cursor: pointer; font-weight: 600; transition: background-color var(--ex-fast);
+}
+.expenses .ex-page-btn:hover { background: var(--ex-sunk); }
+.expenses .ex-page-btn[aria-current='page'] { background: var(--ex-brand-tint); color: var(--ex-brand); border-color: var(--ex-brand); }
+
+/* Loading, empty, and error states */
+.expenses .ex-state { display: grid; justify-items: center; gap: var(--ex-2); padding: var(--ex-6) var(--ex-4); text-align: center; }
+.expenses .ex-state > svg { width: 2rem; height: 2rem; color: var(--ex-muted); }
+.expenses .ex-state--ok > svg { color: var(--ex-ok); }
+.expenses .ex-state--crit > svg { color: var(--ex-crit); }
+.expenses .ex-state p { color: var(--ex-muted); max-width: 32rem; }
+.expenses .ex-state .ex-btn { margin-top: var(--ex-2); }
+.expenses .ex-skel { display: grid; gap: var(--ex-2); padding: var(--ex-4); }
+.expenses .ex-skel span { display: block; height: 0.875rem; border-radius: var(--ex-r-control); background: var(--ex-sunk); animation: ex-pulse 1.2s ease-in-out infinite alternate; }
+.expenses .ex-skel span:first-child { width: 45%; }
+.expenses .ex-skel span:last-child { width: 75%; }
+
+/* Detail and reject dialogs: full-screen sheet on phones, side drawer / centred dialog on wider screens. */
+.expenses .ex-sheet {
+  margin: 0; padding: 0; border: 0; max-width: none; max-height: none; width: 100%; height: 100%;
+  background: var(--ex-surface); color: var(--ex-ink);
+}
+.expenses .ex-sheet::backdrop { background: var(--ex-scrim); }
+.expenses .ex-sheet[open] { animation: ex-up var(--ex-base) var(--ex-ease-out); }
+.expenses .ex-sheet-inner, .expenses .ex-sheet form { display: flex; flex-direction: column; height: 100%; }
+.expenses .ex-sheet-head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--ex-3);
+  padding: var(--ex-2) var(--ex-2) var(--ex-2) var(--ex-4); border-bottom: 1px solid var(--ex-line);
+}
+.expenses .ex-sheet-body { flex: 1; overflow-y: auto; display: grid; align-content: start; gap: var(--ex-4); padding: var(--ex-4); }
+.expenses .ex-sheet-body h3 { margin-bottom: calc(-1 * var(--ex-2)); }
+.expenses .ex-sheet-bar {
+  display: flex; gap: var(--ex-3); padding: var(--ex-3) var(--ex-4) max(var(--ex-3), env(safe-area-inset-bottom));
+  border-top: 1px solid var(--ex-line); background: var(--ex-surface);
+}
+.expenses .ex-sheet-bar .ex-btn { flex: 1; }
+.expenses .ex-sheet-bar .ex-btn--primary, .expenses .ex-sheet-bar .ex-btn--danger { flex: 2; }
+.expenses .ex-confirm { height: auto; top: auto; bottom: 0; border-radius: var(--ex-r-card) var(--ex-r-card) 0 0; }
+.expenses .ex-detail-amount { font-size: var(--ex-t-xl); font-weight: 600; line-height: 1.2; }
+.expenses .ex-detail-who { color: var(--ex-muted); margin-top: calc(-1 * var(--ex-3)); }
+.expenses .ex-detail .ex-pill { justify-self: start; }
+.expenses .ex-facts { margin: 0; border-top: 1px solid var(--ex-line); }
+.expenses .ex-facts div { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: var(--ex-3); padding-block: var(--ex-2); border-bottom: 1px solid var(--ex-line); }
+.expenses .ex-facts dt { color: var(--ex-muted); }
+.expenses .ex-facts dd { margin: 0; overflow-wrap: anywhere; }
+.expenses .ex-receipt {
+  display: flex; gap: var(--ex-3); margin: 0; padding: var(--ex-4); max-width: 20rem;
+  background: var(--ex-bg); border: 1px dashed var(--ex-line-strong); border-radius: var(--ex-r-control); font-size: var(--ex-t-sm);
+}
+.expenses .ex-receipt > svg { color: var(--ex-muted); }
+.expenses .ex-receipt > div { flex: 1; display: grid; gap: var(--ex-1); }
+.expenses .ex-receipt-m { font-weight: 600; }
+.expenses .ex-receipt-t { display: flex; justify-content: space-between; padding-top: var(--ex-2); border-top: 1px solid var(--ex-line); font-weight: 600; }
+
+.expenses .ex-field { display: grid; gap: var(--ex-1); }
+.expenses .ex-field label { font-weight: 600; }
+.expenses .ex-field textarea {
+  width: 100%; min-height: 6rem; margin-top: var(--ex-1); padding: var(--ex-2) var(--ex-3); resize: vertical;
+  font: inherit; color: var(--ex-ink); background: var(--ex-surface);
+  border: 1px solid var(--ex-line-strong); border-radius: var(--ex-r-control);
+}
+.expenses .ex-field [aria-invalid='true'] { border-color: var(--ex-crit); box-shadow: inset 0 0 0 1px var(--ex-crit); }
+.expenses .ex-error { display: flex; gap: var(--ex-2); align-items: flex-start; color: var(--ex-crit); font-weight: 600; }
+.expenses .ex-error svg { margin-top: 0.1em; }
+
+/* Toast: announces each decision and offers Undo. */
+.expenses .ex-toast-region {
+  position: fixed; z-index: 10; left: var(--ex-3); right: var(--ex-3); bottom: max(var(--ex-3), env(safe-area-inset-bottom));
+  display: flex; justify-content: center; pointer-events: none;
+}
+.expenses .ex-toast {
+  pointer-events: auto; display: flex; align-items: center; gap: var(--ex-2); width: 100%; max-width: 32rem;
+  padding: var(--ex-1) var(--ex-1) var(--ex-1) var(--ex-4); border-radius: var(--ex-r-card);
+  background: var(--ex-demo); color: var(--ex-on-dark); box-shadow: var(--ex-shadow-float);
+  animation: ex-up var(--ex-base) var(--ex-ease-out);
+}
+.expenses .ex-toast > svg { color: var(--ex-demo-soft); }
+.expenses .ex-toast p { flex: 1; padding-block: var(--ex-2); font-size: var(--ex-t-sm); }
+.expenses .ex-toast-btn {
+  min-height: 2.75rem; padding-inline: var(--ex-3); border: 0; border-radius: var(--ex-r-control);
+  background: transparent; color: var(--ex-on-dark); font-weight: 600; text-decoration: underline; text-underline-offset: 0.18em; cursor: pointer;
+}
+.expenses .ex-toast-btn:hover, .expenses .ex-toast-close:hover:not(:disabled) { background: var(--ex-demo-raised); color: var(--ex-on-dark); }
+.expenses .ex-toast-close { color: var(--ex-demo-soft); }
+
+@keyframes ex-up { from { opacity: 0; transform: translateY(12px); } }
+@keyframes ex-side { from { opacity: 0; transform: translateX(24px); } }
+@keyframes ex-fade { from { opacity: 0; } }
+@keyframes ex-pulse { to { opacity: 0.5; } }
+
+/* 768 and up: inline row actions and numbered pages. Phones decide from the claim sheet's pinned bar. */
+@media (min-width: 48rem) {
+  .expenses .ex-wrap { padding-inline: var(--ex-6); }
+  .expenses .ex-user-name { display: inline; }
+  .expenses .ex-tabs { display: flex; justify-self: start; }
+  .expenses .ex-row-open { grid-template-columns: minmax(0, 1fr) 7rem 7.5rem; }
+  /* The Pending view has no status pills, so the amount takes the last column. */
+  .expenses .ex-list--pending .ex-row-open { grid-template-columns: minmax(0, 1fr) 7rem; }
+  .expenses .ex-row-meta { grid-row: 2; }
+  .expenses .ex-flag { grid-column: 1; }
+  .expenses .ex-row-amount { grid-row: 1 / 4; grid-column: 2; }
+  .expenses .ex-row-status { grid-row: 1 / 4; grid-column: 3; }
+  .expenses .ex-row-actions { display: flex; justify-content: flex-end; gap: var(--ex-3); flex: none; width: 14rem; padding-right: var(--ex-4); }
+  .expenses .ex-pager { grid-template-columns: 1fr auto; align-items: center; }
+  .expenses .ex-confirm { top: 50%; left: 50%; bottom: auto; width: min(32rem, calc(100% - 2rem)); transform: translate(-50%, -50%); border-radius: var(--ex-r-card); box-shadow: var(--ex-shadow-float); }
+  .expenses .ex-confirm[open] { animation-name: ex-fade; }
+  .expenses .ex-sheet-bar { justify-content: flex-end; }
+  .expenses .ex-sheet-bar .ex-btn, .expenses .ex-sheet-bar .ex-btn--primary, .expenses .ex-sheet-bar .ex-btn--danger { flex: none; }
+}
+
+@media (min-width: 64rem) {
+  .expenses .ex-tools { grid-template-columns: auto minmax(16rem, 24rem); justify-content: space-between; align-items: end; }
+  .expenses .ex-detail { left: auto; right: 0; width: 30rem; border-left: 1px solid var(--ex-line); box-shadow: var(--ex-shadow-float); }
+  .expenses .ex-detail[open] { animation-name: ex-side; }
+  .expenses .ex-toast-region { justify-content: flex-start; left: var(--ex-6); }
+}
+
+/* Last, so it overrides the breakpoint animations. */
+@media (prefers-reduced-motion: reduce) {
+  .expenses .ex-sheet[open], .expenses .ex-detail[open], .expenses .ex-toast { animation-name: ex-fade; }
+  .expenses .ex-skel span { animation: none; }
+  .expenses .ex-btn:active { transform: none; }
+}
