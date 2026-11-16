@@ -5,6 +5,11 @@ All notable changes to this project are documented here. Versions follow [Semant
 ## [Unreleased]
 
 ### Added
+- MIT `LICENSE`, and `license`, `homepage`, and an author URL in `plugin.json`.
+- Plugin icon (`.claude-plugin/icon.png`), rendered from the site's π mark.
+- Plugin setting *Slop check after every UI edit* in `/config` turns the slop hook on for every project; `.prepon/hook-on` and `PREPON_HOOK=1` still turn it on for one project or shell.
+- CI (`.github/workflows/ci.yml`): the script tests with Playwright, a site build, and `claude plugin validate` on every push and pull request, pinned to one Claude Code version. A weekly run (`latest-engine.yml`) validates against the newest Claude Code.
+- README restructured: tagline, screenshots, a Why section, install first, a scripts table, Privacy and side effects, and Develop.
 - Six generated-copy rules in `detect-slop.js` (53 rules now): `ai-vocabulary`, `assistant-leak`, `vague-error`, `vague-link`, `fragment-triplet`, and `exclaim-copy`, plus six copy judgment tells in `slop-patterns.md` (lists of three, title case, interface-describing copy, padding, slogans, repeated sentence shapes).
 - `ux-writing.md` reference: voice and plain language, labels, buttons and links, errors, empty, loading and success states, and confirmations, each rule cited to NN/g, WCAG 2.2, GOV.UK, Digital.gov, Apple HIG, or Baymard. Build and audit read it, and the self-review checklist checks copy.
 - Usability heuristics section in `ux-laws.md`: Nielsen's ten as project rules, with a check and a common misuse for each. Audits walk the main flow against them and cite the heuristic (H1–H10) on each finding it explains.
