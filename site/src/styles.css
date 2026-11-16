@@ -619,6 +619,8 @@ body:has(.hero) .toy-input .section-head { margin-bottom: var(--s-4); }
 .toy-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2); }
 .toy-head code { font-weight: 600; color: var(--ink); text-decoration: line-through; text-decoration-color: var(--accent); }
 .toy-times { color: var(--muted); font-variant-numeric: tabular-nums; }
+/* Marks a rule the loaded sample didn't trip: the visitor's own edit caused it. */
+.toy-new { padding: 0 var(--s-2); border: 1px solid var(--accent); border-radius: var(--radius-pill); font: 0.75rem/1.5 var(--mono); color: var(--accent); }
 /* Line chips select that line in the editor. 32px tall, with the row's spacing keeping neighbours apart. */
 .toy-line {
   display: inline-flex; align-items: center; min-height: 2rem; padding-inline: var(--s-2);

@@ -216,7 +216,8 @@ const RULES = [
     id: 'em-dash-copy',
     exts: [...CODE, 'html'],
     minCount: 5,
-    pattern: /—/g,
+    // A dash standing alone as a string or cell ('—', <td>—</td>) is an empty-value placeholder, not prose.
+    pattern: /(?<![>'"`]\s*)—|—(?!\s*[<'"`])/g,
     suggestion: 'Rewrite with full stops, commas, or parentheses; a dash in every sentence is a generated-copy habit.',
   },
   {
