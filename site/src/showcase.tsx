@@ -161,19 +161,22 @@ export function SlopToy({ head }: { head?: ReactNode }) {
   const mirror = useRef<HTMLPreElement>(null);
   // Cached: hovering a finding re-renders this component, and re-running every rule on each hover cost frames on slow phones.
   const findings = useMemo(() => detect(code), [code]);
-  // One entry per rule, in order of its first line (findings are already sorted by line).
+  // Rules the loaded sample already trips. Any other rule is new from the visitor's edits, so it goes first
+  // and is tagged; otherwise a tell typed low in the sample lands past the fold of the collapsed list.
+  const [base, setBase] = useState(() => new Set(detect(SLOP_SAMPLE).map((f) => f.rule)));
+  // One entry per rule: new rules first, then the rest in order of their first line (findings are sorted by line).
   const groups = [...findings.reduce((m, f) => {
     const g = m.get(f.rule) ?? { rule: f.rule, suggestion: f.suggestion, lines: [], matches: [], count: 0 };
     g.count++;
     if (!g.lines.includes(f.line)) g.lines.push(f.line);
     if (!g.matches.includes(f.match)) g.matches.push(f.match);
     return m.set(f.rule, g);
-  }, new Map<string, Group>()).values()];
+  }, new Map<string, Group>()).values()].sort((a, b) => Number(base.has(a.rule)) - Number(base.has(b.rule)));
   const flagged = new Set(findings.map((f) => f.line));
   const lines = code.split('\n');
   const visible = all ? groups : groups.slice(0, FIRST);
   const preset = code === SLOP_SAMPLE ? 'slop' : code === FITTED_SAMPLE ? 'fitted' : null;
-  const load = (c: string) => { setCode(c); setActive(0); };
+  const load = (c: string) => { setCode(c); setActive(0); setBase(new Set(detect(c).map((f) => f.rule))); };
 
   // Select the line in the editor so the finding and the code it's about are seen together.
   const goTo = (line: number) => {
@@ -215,7 +218,7 @@ export function SlopToy({ head }: { head?: ReactNode }) {
       </div>
       <div className="toy-output">
         <p className="toy-count" role="status">
-          <strong>{findings.length}</strong>{findings.length === 1 ? 'tell' : 'tells'} from {groups.length} of the detector’s {RULES.length} rules
+          <strong>{findings.length}</strong> {findings.length === 1 ? 'tell' : 'tells'} from {groups.length} of the detector’s {RULES.length} rules
         </p>
         <span className="toy-meter" aria-hidden="true"><i style={{ '--v': groups.length / RULES.length } as CSSProperties} /></span>
         {findings.length ? (
@@ -225,6 +228,7 @@ export function SlopToy({ head }: { head?: ReactNode }) {
                 <li key={g.rule} onPointerEnter={() => setPeek(g.lines)} onPointerLeave={() => setPeek([])}>
                   <p className="toy-head">
                     <code>{g.rule}</code>{g.count > 1 && <span className="toy-times">×{g.count}</span>}
+                    {!base.has(g.rule) && <span className="toy-new">new</span>}
                     {g.lines.map((l) => (
                       <button key={l} type="button" className="toy-line" aria-pressed={active === l} onClick={() => goTo(l)}>
                         <span className="visually-hidden">Select </span>line {l}<span className="visually-hidden"> in the code</span>

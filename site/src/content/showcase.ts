@@ -39,8 +39,10 @@ export const SLOP_SAMPLE = `export function Hero() {
       <div className="rounded-3xl shadow-2xl backdrop-blur-md p-6">
         <h1>🚀 Supercharge your workflow</h1>
         <p className="text-gray-400 text-[11px]">
-          Seamlessly elevate your team.
+          Seamlessly elevate your team. Fast. Simple. Secure.
         </p>
+        <p>Delve into the all-in-one platform.</p>
+        <a href="/pricing">Learn more</a>
         <input placeholder="Email" />
         <button className="transition-all duration-700 animate-bounce">
           Get started
@@ -57,6 +59,7 @@ export const FITTED_SAMPLE = `export function PermitStart() {
       <p className="text-muted">
         It takes about 15 minutes. Answers save as you go.
       </p>
+      <a href="/permits/fees">See permit fees</a>
       <label htmlFor="email">Email</label>
       <input id="email" type="email" autoComplete="email" />
       <button className="btn-primary">

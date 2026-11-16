@@ -111,6 +111,7 @@ test('new rules stay quiet on the craft baseline', () => {
   assert.deepStrictEqual(run('ok.css', ok), []);
   assert.deepStrictEqual(run('Skel.tsx', '<div className="h-24 w-full rounded-full animate-pulse"/><ol><li>Step one</li></ol>'), []);
   assert.deepStrictEqual(run('Two.tsx', '<p>One — two — three.</p>'), []);
+  assert.deepStrictEqual(run('Empty.ts', "const r = { a: '—', b: '—', c: \"—\", d: `—` }; <td>—</td><td> — </td>"), []);
 });
 
 test('template rules: flag the premium-dark kit, leave plain borders, shadows and single labels alone', () => {
