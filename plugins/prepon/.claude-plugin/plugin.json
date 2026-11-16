@@ -2,7 +2,17 @@
   "name": "prepon",
   "version": "0.1.0",
   "description": "Builds and reviews UI that fits the project and its users, cites UX principles, and catches generic AI-styled interfaces.",
-  "author": { "name": "Pat Castro" },
+  "author": { "name": "Pat Castro", "url": "https://github.com/PatriusCastro" },
+  "homepage": "https://github.com/PatriusCastro/prepon",
   "repository": "https://github.com/PatriusCastro/prepon",
-  "keywords": ["design", "ux", "frontend", "accessibility", "react", "react-native", "audit"]
+  "license": "MIT",
+  "keywords": ["design", "ux", "ui", "frontend", "accessibility", "wcag", "react", "react-native", "audit", "design-review", "ai-slop", "ux-writing"],
+  "userConfig": {
+    "slop_hook": {
+      "type": "boolean",
+      "title": "Slop check after every UI edit",
+      "description": "Run the slop detector on each UI file Claude edits, in every project, and report findings back. Off = only projects that opt in with a .prepon/hook-on file (or PREPON_HOOK=1).",
+      "default": false
+    }
+  }
 }

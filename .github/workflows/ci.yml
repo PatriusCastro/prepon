@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      # The page and motion tests use the site's Playwright; without it they skip instead of failing.
+      - run: npm ci --prefix site
+      - run: npx --prefix site playwright install --with-deps chromium
+      - run: node --test test/*.test.js
+      # The site imports the detector's rules, so a rule that breaks the browser build fails here too.
+      - run: npm run build --prefix site
+      # Pinned: the version these checks were last run against locally. latest-engine.yml tries the newest.
+      - run: npm install -g @anthropic-ai/claude-code@2.1.325
+      - run: claude plugin validate .
+      - run: claude plugin validate plugins/prepon
