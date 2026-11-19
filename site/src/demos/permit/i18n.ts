@@ -182,6 +182,7 @@ const en = {
   checkLede: 'Check your answers. You can still change anything before you submit.',
   change: 'Change',
   notAnswered: 'Not answered',
+  notStarted: 'Not started yet',
   rows: {
     name: 'Name', mobile: 'Mobile number', email: 'Email', bizName: 'Business name', reg: 'Registration',
     bizType: 'Kind of business', capital: 'Capital investment', workers: 'People working', sign: 'Signboard',
@@ -427,6 +428,7 @@ const fil: Strings = {
   checkLede: 'Suriin ang mga sagot mo. Puwede mo pang baguhin ang kahit ano bago i-submit.',
   change: 'Baguhin',
   notAnswered: 'Wala pang sagot',
+  notStarted: 'Hindi pa nasisimulan',
   rows: {
     name: 'Pangalan', mobile: 'Mobile number', email: 'Email', bizName: 'Pangalan ng negosyo', reg: 'Rehistro',
     bizType: 'Klase ng negosyo', capital: 'Puhunan', workers: 'Bilang ng nagtatrabaho', sign: 'Signboard',
