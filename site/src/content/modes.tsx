@@ -83,7 +83,8 @@ export const modeDocs: Record<string, ReactNode> = {
         <li><strong>Review</strong> against each area of the rubric and the judgment tells. Motion that drops frames in a core flow is a major finding.</li>
         <li><strong>List opportunities:</strong> things that work but would serve your users better, most often motion that could run on the GPU or feedback that’s missing. They’re numbered O1, O2 and kept out of the score, so the score still measures only what’s wrong.</li>
         <li><strong>Write the report</strong> to <code>docs/ui-audit-YYYY-MM-DD.md</code> in your project, adding <code>-2</code>, <code>-3</code> if one exists for today.</li>
-        <li><strong>Reply</strong> with the scores, the critical findings, and the file path.</li>
+        <li><strong>Publish a report page</strong> that takes a minute to read: a one-sentence verdict, the score and finding counts, charts that all work the same way (score by area, frames dropped on a slow phone, contrast against its minimum, how busy each phone screen is, task steps), the fixes in order, and what users see first. Without artifact support it’s written to <code>.prepon/audit/</code> instead.</li>
+        <li><strong>Reply</strong> with the scores, the critical and major findings, the page link, and the file path.</li>
       </ol>
 
       <h2>Severity</h2>

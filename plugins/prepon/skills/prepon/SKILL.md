@@ -21,7 +21,7 @@ If the first word is a mode name, use it. Otherwise infer it: making or changing
 | Mode | Edits code? | Read before starting | Output |
 |---|---|---|---|
 | build | yes | project-types.md (matching section), then only the references that apply | code, slop and consistency scans, checklist, before/after when changing existing UI, rationale table |
-| audit `<target>` | never | modes.md#audit, project-types.md, ux-laws.md, accessibility.md, slop-patterns.md, ux-writing.md, hierarchy.md, visual-craft.md, consistency.md, icons.md, motion.md, plus responsive.md or mobile.md | `docs/ui-audit-YYYY-MM-DD.md` in the working project |
+| audit `<target>` | never | modes.md#audit, project-types.md, ux-laws.md, accessibility.md, slop-patterns.md, ux-writing.md, hierarchy.md, visual-craft.md, consistency.md, icons.md, motion.md, plus responsive.md or mobile.md | `docs/ui-audit-YYYY-MM-DD.md` in the working project, plus a published report page with charts |
 | fix | yes | modes.md#fix, the latest audit report, before-after.md, consistency.md for consistency findings, motion.md for motion findings and opportunities | fixes in severity order, then any opportunities you named (O1, O2…), before/after, change table |
 | cite `<target>` | never | modes.md#cite, ux-laws.md, project-types.md | Markdown table ready to paste into client documentation |
 | refs `<pattern>` | never | modes.md#refs, project-types.md | 3 to 5 real examples with links and what to adapt |

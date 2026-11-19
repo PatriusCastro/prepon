@@ -9,6 +9,8 @@
 //
 // Writes .prepon/snapshots/<stamp>/<phase>/<route>@<width>.png, makes sure `.prepon/` is in
 // the project's .gitignore, and prints JSON: { dir, stamp, shots: [{ route, width, file }], errors }.
+// --out <dir> writes <dir>/snapshots/... instead (still run from the project, so its Playwright is found);
+// nothing is added to .gitignore and the printed paths are absolute.
 // Reuse the printed stamp for the "after" phase so both land in the same folder.
 'use strict';
 const fs = require('fs');
@@ -54,7 +56,7 @@ const slug = (route) => (route.replace(/^\/+|\/+$/g, '').replace(/[^\w-]+/g, '_'
 async function main() {
   const a = args(process.argv.slice(2));
   if (!a.base || !a.routes || !a.phase) {
-    process.stderr.write('usage: node snapshot.js --base <url> --routes </a,/b> --phase <before|after> [--stamp s] [--widths 360,768,1440] [--storage-state file] [--wait-for selector] [--viewport]\n');
+    process.stderr.write('usage: node snapshot.js --base <url> --routes </a,/b> --phase <before|after> [--stamp s] [--widths 360,768,1440] [--storage-state file] [--wait-for selector] [--viewport] [--out dir]\n');
     return 2;
   }
   const routes = String(a.routes).split(',');
@@ -71,9 +73,11 @@ async function main() {
 
   const root = process.cwd();
   const stamp = typeof a.stamp === 'string' ? a.stamp : new Date().toISOString().slice(0, 16).replace(/[-:]/g, '').replace('T', '-');
-  const dir = path.join(root, '.prepon', 'snapshots', stamp, a.phase);
+  const out = typeof a.out === 'string' ? path.resolve(a.out) : null;
+  const dir = path.join(out || path.join(root, '.prepon'), 'snapshots', stamp, a.phase);
   fs.mkdirSync(dir, { recursive: true });
-  ensureGitignored(root);
+  if (!out) ensureGitignored(root);
+  const show = (f) => (out ? f : path.relative(root, f)).split(path.sep).join('/');
   const widths = String(a.widths || '360,768,1440').split(',').map(Number);
   const heights = { 360: 800, 768: 1024, 1440: 900 };
   let browser;
@@ -99,7 +103,7 @@ async function main() {
           await page.goto(resolveRoute(a.base, route), { waitUntil: 'networkidle', timeout: 30000 });
           if (typeof a['wait-for'] === 'string') await page.waitForSelector(a['wait-for'], { timeout: 10000 });
           await page.screenshot({ path: file, fullPage: !a.viewport, animations: 'disabled' });
-          shots.push({ route, width, file: path.relative(root, file).split(path.sep).join('/'), finalUrl: page.url() });
+          shots.push({ route, width, file: show(file), finalUrl: page.url() });
         } catch (e) {
           errors.push({ route, width, error: String(e.message || e).split('\n')[0] });
         }
@@ -110,7 +114,7 @@ async function main() {
   } finally {
     await browser.close();
   }
-  process.stdout.write(JSON.stringify({ dir: path.relative(root, dir).split(path.sep).join('/'), stamp, shots, errors }, null, 2) + '\n');
+  process.stdout.write(JSON.stringify({ dir: show(dir), stamp, shots, errors }, null, 2) + '\n');
   return errors.length ? 1 : 0;
 }
 

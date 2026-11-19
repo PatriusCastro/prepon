@@ -135,7 +135,7 @@ export const referenceDocs: Record<string, ReactNode> = {
       <h2>What each mode reads, edits, and returns</h2>
       <Table head={['Mode', 'Edits code', 'Reads first', 'Output']} rows={[
         ['build', 'Yes', 'The matching project type, then only the references that apply', 'Code, slop scan, checklist, before/after for existing UI, rationale table'],
-        ['audit', 'Never', 'Project types, UX laws, accessibility, slop patterns, responsive or mobile', <code>docs/ui-audit-YYYY-MM-DD.md</code>],
+        ['audit', 'Never', 'Project types, UX laws, accessibility, slop patterns, responsive or mobile', <><code>docs/ui-audit-YYYY-MM-DD.md</code> and a report page</>],
         ['fix', 'Yes', 'The latest audit report and the before/after procedure', 'Fixes in severity order, before/after, change table'],
         ['cite', 'Never', 'UX laws and project types', 'A Markdown table ready to paste'],
         ['refs', 'Never', 'Project types', '3 to 5 real examples with links and what to adapt'],
@@ -368,7 +368,7 @@ export const referenceDocs: Record<string, ReactNode> = {
       <CodeBlock label="Snapshot script" code={'node ${CLAUDE_SKILL_DIR}/scripts/snapshot.js --base http://localhost:5173 \\\n  --routes /login,/dashboard --phase before'} />
       <p>Check each shot’s <code>finalUrl</code>: a protected route that landed on the login page wasn’t captured. Pass <code>--storage-state auth.json</code> or treat that route as not capturable. Add <code>--wait-for</code> with a selector if content loads late.</p>
       <h2>Keep screenshots out of git</h2>
-      <p>Snapshots go in <code>.prepon/snapshots/&lt;stamp&gt;/</code>, and the script adds <code>.prepon/</code> to your <code>.gitignore</code> if it’s missing. Screenshots of client screens don’t belong in version control.</p>
+      <p>Snapshots go in <code>.prepon/snapshots/&lt;stamp&gt;/</code>, and the script adds <code>.prepon/</code> to your <code>.gitignore</code> if it’s missing. Screenshots of client screens don’t belong in version control. To keep them out of the project folder entirely, pass <code>--out &lt;dir&gt;</code> to <code>snapshot.js</code> or <code>tap-map.js</code>, still running it from the project so its Playwright is found.</p>
       <h2>React Native</h2>
       <p>With a running simulator or emulator (<code>xcrun simctl io booted screenshot</code>, or <code>adb exec-out screencap -p</code>), screens go into the same folders as <code>&lt;screen&gt;@&lt;device&gt;.png</code>.</p>
       <h2>When it can’t capture</h2>

@@ -53,7 +53,7 @@ After editing skill files, run `/reload-plugins` in the session.
 - **Claude Code**, a recent version: tested on 2.1.322, and the manifest validates on 2.1.325. Canvas mode's design canvas needs v2.1.265 or later, a claude.ai login, and an organization that hasn't turned off the Design template.
 - **Node.js 18 or later** for the bundled scripts. They have no dependencies.
 - **Playwright (optional)** in the project you're working on, for screenshots and the rendered-page checks. Prepon uses the project's own install and asks before adding it.
-- **Artifacts (optional)** for publishing before/after comparisons and canvas directions. They need a claude.ai login and aren't available on Bedrock, Vertex, or Foundry, or with `claude -p`. Without them, Prepon writes local files and gives a change summary table.
+- **Artifacts (optional)** for publishing audit report pages, before/after comparisons, and canvas directions. They need a claude.ai login and aren't available on Bedrock, Vertex, or Foundry, or with `claude -p`. Without them, Prepon writes local files and gives a change summary table.
 
 ## What you get
 
@@ -88,7 +88,7 @@ Plugin skills are namespaced, so the full command is `/prepon:prepon`. The bare 
 | Mode | What it does | Example |
 |---|---|---|
 | `build` | Creates or changes UI, mobile-first, with a slop scan, an accessibility checklist, before/after screenshots for existing screens, and a rationale table. | `/prepon:prepon build a vehicle detail drawer for the dispatch console` |
-| `audit <target>` | Reviews existing UI and writes `docs/ui-audit-YYYY-MM-DD.md`. Never edits code. | `/prepon:prepon audit src/pages/PermitApplication.tsx` |
+| `audit <target>` | Reviews existing UI, writes `docs/ui-audit-YYYY-MM-DD.md`, and publishes a report page with charts. Never edits code. | `/prepon:prepon audit src/pages/PermitApplication.tsx` |
 | `fix` | Applies findings from the latest audit in severity order, with before/after. | `/prepon:prepon fix A1-A3` |
 | `cite <target>` | Explains an existing design: decision, principle, why it applies, and status. Outputs a paste-ready Markdown table. Never edits code. | `/prepon:prepon cite the transfer review screen` |
 | `refs <pattern>` | Finds 3 to 5 real, well-regarded examples with links and what to adapt. Structure only, no copying. | `/prepon:prepon refs multi-step identity verification` |
@@ -179,9 +179,9 @@ node plugins/prepon/skills/prepon/scripts/scan-consistency.js --summary src/
 ## Privacy and side effects
 
 - **What it reads:** your project's source files, configuration, and docs, through Claude Code's normal tools.
-- **What it writes:** UI code (in `build` and `fix`), audit reports to `docs/ui-audit-YYYY-MM-DD.md`, and screenshots, tap maps, and canvas fallbacks to `.prepon/` in your project. It checks that `.prepon/` is in `.gitignore` before writing there, because screenshots of client screens don't belong in version control. `audit`, `cite`, and `refs` never edit code.
+- **What it writes:** UI code (in `build` and `fix`), audit reports to `docs/ui-audit-YYYY-MM-DD.md`, and screenshots, tap maps, and canvas fallbacks to `.prepon/` in your project (or to a folder you choose with `--out`). It checks that `.prepon/` is in `.gitignore` before writing there, because screenshots of client screens don't belong in version control. `audit`, `cite`, and `refs` never edit code.
 - **What leaves your machine, beyond the conversation itself:**
-  - **Artifacts.** Before/after comparisons (with their screenshots) and canvas directions are published as claude.ai Artifacts, which are private to you until you share them. Without Artifacts, they stay as local files.
+  - **Artifacts.** Audit report pages, before/after comparisons (with their screenshots), and canvas directions are published as claude.ai Artifacts, which are private to you until you share them. Without Artifacts, they stay as local files.
   - **Web search** in `refs` mode, for the UI pattern you name.
 - **What it runs:** the bundled Node scripts, and your project's own Playwright, pointed at the dev server URL you give it. The skill pre-approves only `node <scripts>/*`; any other command goes through your normal permission prompts. It asks before installing Playwright. The scripts make no network requests of their own beyond loading those pages (and whatever those pages load).
 - **The hook** is off until you turn it on (see above), reads only the file that was just edited, and writes nothing.
