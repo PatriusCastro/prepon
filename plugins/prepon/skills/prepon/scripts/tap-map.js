@@ -9,6 +9,8 @@
 //   node tap-map.js --base http://localhost:5173 --routes login,dashboard [--primary "button[type=submit]"]
 //                   [--width 360] [--height 800] [--stamp s] [--storage-state auth.json] [--wait-for "main"]
 // Writes .prepon/snapshots/<stamp>/tapmap/<route>-taps@<w>.png, -blur@<w>.png, -attention@<w>.png, and prints JSON.
+// --out <dir> writes <dir>/snapshots/... instead (still run from the project, so its Playwright is found);
+// the printed paths are then absolute.
 //
 // This is a prediction from layout, not a measurement of real taps. If the project has analytics or
 // session recordings, those win.
@@ -312,7 +314,7 @@ function drawAttention({ items }) {
 async function main() {
   const a = args(process.argv.slice(2));
   if (!a.base || !a.routes) {
-    process.stderr.write('usage: node tap-map.js --base <url> --routes <a,b> [--primary selector] [--width 360] [--height 800] [--stamp s] [--storage-state file] [--wait-for selector]\n');
+    process.stderr.write('usage: node tap-map.js --base <url> --routes <a,b> [--primary selector] [--width 360] [--height 800] [--stamp s] [--storage-state file] [--wait-for selector] [--out dir]\n');
     return 2;
   }
   const routes = String(a.routes).split(',');
@@ -329,7 +331,8 @@ async function main() {
   const h = Number(a.height || 800);
   const root = process.cwd();
   const stamp = typeof a.stamp === 'string' ? a.stamp : new Date().toISOString().slice(0, 16).replace(/[-:]/g, '').replace('T', '-');
-  const dir = path.join(root, '.prepon', 'snapshots', stamp, 'tapmap');
+  const out = typeof a.out === 'string' ? path.resolve(a.out) : null;
+  const dir = path.join(out || path.join(root, '.prepon'), 'snapshots', stamp, 'tapmap');
   fs.mkdirSync(dir, { recursive: true });
 
   let browser;
@@ -375,7 +378,7 @@ async function main() {
         await page.evaluate(drawOverlay, { targets: result.targets, h, colors: ZONE_COLOR });
         const tapFile = path.join(dir, `${slug}-taps@${w}.png`);
         await page.screenshot({ path: tapFile, animations: 'disabled' });
-        const rel = (f) => path.relative(root, f).split(path.sep).join('/');
+        const rel = (f) => (out ? f : path.relative(root, f)).split(path.sep).join('/');
         results.push({ route, finalUrl: page.url(), overlay: rel(tapFile), blur: rel(blurFile), attentionMap: rel(attFile), ...result });
       } catch (e) {
         results.push({ route, error: String(e.message || e).split('\n')[0] });

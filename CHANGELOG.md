@@ -4,6 +4,12 @@ All notable changes to this project are documented here. Versions follow [Semant
 
 ## [Unreleased]
 
+## [0.2.0-beta.2] - 2026-11-19
+
+### Added
+- Audit mode publishes the report as a page people can take in within a minute: a one-sentence verdict, the score and finding counts, charts that all use one horizontal-bar component (score by area, frames dropped on a slow phone, contrast against its minimum, tap targets per phone screen, task steps), the fixes in order, and the tap-map captures. The Markdown report stays as the record fix mode reads. Without artifact support the page is written to `.prepon/audit/`.
+- `--out <dir>` on `snapshot.js` and `tap-map.js`: captures go to that folder instead of the project's `.prepon/`, the project's `.gitignore` is left alone, and printed paths are absolute. Run from the project as before, so its Playwright is still found.
+
 ## [0.2.0-beta.1] - 2026-11-19
 
 First beta for testers.

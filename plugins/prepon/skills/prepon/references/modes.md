@@ -28,8 +28,27 @@ Reviews existing UI and writes a report. It never edits source code. An audit pe
 5. **Count the steps** for the target's top three tasks, as described under Interaction cost in ux-laws.md. Each avoidable step is a usability finding.
 6. **Review** against each area of the rubric below, the judgment tells in slop-patterns.md, and the behavior checklist in consistency.md: button states, action placement, forms, feedback, overlays, and wording, compared across the screens in scope. Walk the main flow once against the ten usability heuristics (ux-laws.md) and cite the heuristic ("H5 Error prevention") on each finding it explains. Read every string in scope once, in order, with the checks in ux-writing.md, and quote each copy finding with its replacement. Check motion against "How to check" and "Low-end devices" in motion.md. Motion that drops frames at `--cpu 4` in a core flow is a major finding.
    Then list **opportunities**: things that work but would serve these users better, each tied to a principle. Most are motion: a press or state change with no feedback, a main-thread animation that could run on the compositor, a loop that runs off screen, an effect that drops frames only at `--cpu 6`. Opportunities never go in Findings and never change the score, so the audit stays a fair measure of what is wrong.
-7. **Write the report** to `docs/ui-audit-YYYY-MM-DD.md` in the working project. Create `docs/` if it's missing, and add `-2`, `-3` and so on if a report for today already exists. Use the template below.
-8. **Reply** with the score summary, the critical findings, how many opportunities there are, and the file path.
+7. **Write the report** to `docs/ui-audit-YYYY-MM-DD.md` in the working project. Create `docs/` if it's missing, and add `-2`, `-3` and so on if a report for today already exists. Use the template below. This file is the record that fix mode reads.
+8. **Publish the report as a page** (see [Report page](#report-page) below). The Markdown is for the repo; the page is what people read. Publish it as an artifact with the captures as supporting files. If artifacts aren't available, write it to `.prepon/audit/YYYY-MM-DD/index.html` and give the path.
+9. **Reply** with the score summary, the critical and major findings, how many opportunities there are, the page link, and the file path.
+
+### Report page
+
+Someone should take in the result in a minute without reading the Markdown. If a data-visualization skill is available, load it before drawing the charts. Then build, in this order:
+
+1. **Verdict.** The target's name and one plain sentence: is it in good shape, and what are the one or two things to fix. No principle names here.
+2. **Stat tiles,** four in a row (two on phones): the total score out of 50, then the counts of critical, major, and minor findings, each with a three-or-four-word note ("nothing blocks the task").
+3. **Charts, all built from one component** so they read the same: a card with a title, a one-line takeaway that states the answer, horizontal bars (label left, bar, value right, one bar colour), a reference line where there's a limit, a short legend when a second colour or a line appears, an axis with a few ticks, and a "Show as table" view. Every bar has a tooltip on hover and keyboard focus. Use a second colour, with its icon and label, only for the values that are findings. Draw the charts the audit has data for, and skip the rest:
+   - score by area, each out of 10, as a meter
+   - frames dropped while scrolling per route from motion-perf, with the 10% limit
+   - contrast ratio per token pair against its WCAG minimum, the lower of light and dark
+   - tap targets on the first phone screen per route from tap-map, with the guideline of 12
+   - steps for each top task
+4. **What to fix, in order.** One numbered card per finding, in the prioritized order: a severity chip that pairs an icon with the word (Critical, Major, Minor), a plain title that says what goes wrong for the user, two lines on what happens and the fix, then the ID and file location in small type. Quote the evidence that convinces, such as a reproduced wrong value.
+5. **What users see first.** The tap-map attention captures for three or four key routes, with a switch to the blurred captures.
+6. **Not checked,** as a short list.
+
+Write for someone who wasn't there: plain words, sentences under about 20 words, findings named by their effect ("the amount can change while you type"), not by the rule ("Postel's law"). The full principle and rule citations stay in the Markdown. Check the page at phone and desktop widths in both themes before publishing.
 
 ### Severity
 

@@ -1,6 +1,6 @@
 {
   "name": "prepon",
-  "version": "0.2.0-beta.1",
+  "version": "0.2.0-beta.2",
   "description": "Builds and reviews UI that fits the project and its users, cites UX principles, and catches generic AI-styled interfaces.",
   "author": { "name": "Pat Castro", "url": "https://github.com/PatriusCastro" },
   "homepage": "https://github.com/PatriusCastro/prepon",

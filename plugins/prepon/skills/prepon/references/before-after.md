@@ -12,6 +12,7 @@ Use this whenever build or fix changes UI that already exists. Brand-new screens
    node <scripts>/snapshot.js --base http://localhost:5173 --routes /login,/dashboard --phase before
    ```
    - Default widths are 360, 768, and 1440. The script also adds `.prepon/` to the project's `.gitignore` if it's missing.
+   - To keep captures out of the project folder (a shared checkout, a repo that mustn't change, or when the user asks), add `--out <dir>`. Still run it from the project root so its Playwright is found. Nothing is added to `.gitignore`, and the printed paths are absolute. `tap-map.js` takes the same flag.
    - Routes resolve relative to `--base`, so a site served under a base path keeps it. With `--base http://localhost:5173/app/`, the route `/settings` captures `/app/settings`.
    - In Git Bash on Windows, arguments that start with `/` get rewritten into file paths. Write routes without the leading slash (`login,dashboard`). The script stops with a clear error if it receives a rewritten path.
    - If the script reports `playwright-browser-missing`, run `npx playwright install chromium` in the foreground and wait for it to finish before retrying.

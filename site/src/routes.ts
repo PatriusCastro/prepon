@@ -8,7 +8,7 @@ export const DOCS: Doc[] = [
   { group: 'Modes', slug: 'build', nav: 'build', title: 'build mode', source: `${SKILL}/SKILL.md`,
     summary: 'Creates or changes UI. Reads the project first, builds mobile-first, then runs a slop scan and an accessibility checklist, and ends with a rationale table.' },
   { group: 'Modes', slug: 'audit', nav: 'audit', title: 'audit mode', source: `${SKILL}/references/modes.md`,
-    summary: 'Reviews existing UI and writes a scored report to docs/ui-audit-YYYY-MM-DD.md. Never edits code.' },
+    summary: 'Reviews existing UI, writes a scored report to docs/ui-audit-YYYY-MM-DD.md, and publishes it as a page with charts. Never edits code.' },
   { group: 'Modes', slug: 'fix', nav: 'fix', title: 'fix mode', source: `${SKILL}/references/modes.md`,
     summary: 'Applies findings from the latest audit in severity order, with before/after screenshots and a change table.' },
   { group: 'Modes', slug: 'cite', nav: 'cite', title: 'cite mode', source: `${SKILL}/references/modes.md`,
