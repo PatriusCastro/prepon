@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Versions follow [Semant
 
 ## [Unreleased]
 
+## [0.2.0-beta.1] - 2026-11-19
+
+First beta for testers.
+
 ### Added
 - MIT `LICENSE`, and `license`, `homepage`, and an author URL in `plugin.json`.
 - Plugin icon (`.claude-plugin/icon.png`), rendered from the site's π mark.
@@ -20,6 +24,11 @@ All notable changes to this project are documented here. Versions follow [Semant
 - `offscreen-animation` also covers endless animations inside an invisible parent.
 - Five motion-performance rules in `detect-slop.js` (47 rules now): `layout-animation`, `paint-animation`, `will-change-overuse`, `scroll-listener`, and `blocking-touch-listener`.
 - Predicted attention order in `tap-map.js`: ranks what's on the first screen by likely first look (size, contrast, position, isolated colour), saves a numbered `-attention` image, reports `primaryRank`, and flags `primary-not-salient` when the primary action isn't in the first three. Labelled as a prediction; real analytics heatmaps win.
+
+### Changed
+- Site: one shared demo bar (`DemoBar.tsx`) above every demo, with the way back, what's made up, and the demo's own controls, replacing each demo's own version.
+- Site: the demos load on demand, so other pages no longer download them or Leaflet (main bundle 640 kB → 390 kB, CSS 160 kB → 58 kB). Focus still moves to the new page's heading after navigating into a demo.
+- Site: the header and footer version is read from `plugin.json`.
 
 ### Fixed
 - `slow-motion` no longer reads `.3s` as 3 s.

@@ -11,6 +11,7 @@ import '@fontsource/ibm-plex-sans/latin-400.css';
 import '@fontsource/ibm-plex-sans/latin-600.css';
 import '@fontsource/ibm-plex-sans/latin-700.css';
 import { Link, navigate } from '../../router';
+import { DemoBar } from '../DemoBar';
 import { useOnline } from '../useOnline';
 import {
   BARANGAYS, BIZ_TYPES, CITY, DOC_IDS, EMPTY, MAX_FILE, PAY_METHODS, STEPS, digits, fees, firstIncomplete, fmtMobile,
@@ -18,12 +19,11 @@ import {
   type DocId, type Draft, type Errors, type StepSlug, type Upload,
 } from './data';
 import { STRINGS, type Lang, type Strings } from './i18n';
+import { BASE, LANG_KEY, loadLang, permitTitle } from './title';
 import './permit.css';
 
-const BASE = '/demo/permit';
 const DRAFT_KEY = 'marilag-permit-draft';
 const DONE_KEY = 'marilag-permit-submitted';
-const LANG_KEY = 'marilag-permit-lang';
 const READY_KEY = 'marilag-permit-ready';
 const STAGES = ['submitted', 'assessment', 'payment', 'inspection', 'release'] as const;
 const READY_ITEMS = ['reg', 'brgy', 'ctc', 'place', 'id'] as const;
@@ -51,8 +51,6 @@ function loadDraft(): Draft {
   return d;
 }
 
-const loadLang = (): Lang => (localStorage.getItem(LANG_KEY) === 'fil' ? 'fil' : 'en');
-
 // ---------- language ----------
 
 const Ctx = createContext<{ t: Strings; lang: Lang }>({ t: STRINGS.en, lang: 'en' });
@@ -68,14 +66,6 @@ function addWorkingDays(from: string, n: number) {
   const d = new Date(from);
   while (n > 0) { d.setDate(d.getDate() + 1); if (d.getDay() % 6 !== 0) n--; }
   return d;
-}
-
-export function permitTitle(path: string) {
-  const t = STRINGS[loadLang()];
-  const slug = path.slice(BASE.length + 1) as StepSlug;
-  const i = STEPS.indexOf(slug);
-  const title = i >= 0 ? `${t.steps[slug]} (${t.stepOf(i + 1, STEPS.length)})` : (slug as string) === 'done' ? t.pageTitle.done : t.pageTitle.start;
-  return `${title} · ${t.pageTitle.suffix}`;
 }
 
 // ---------- shell ----------
@@ -103,24 +93,19 @@ export function Permit({ path }: { path: string }) {
     <Ctx.Provider value={{ t, lang }}>
       <div className="permit" lang={lang} data-page={i >= 0 ? 'step' : slug === 'done' ? 'done' : 'start'}>
         <a className="skip" href="#permit-main">{t.skip}</a>
-        {/* Demo bar: Prepon's, not the city's, so it stays in English and outside the city's chrome. */}
-        <div className="p-demobar" lang="en">
-          <div className="p-wrap p-demobar-row">
-            <p>Prepon demo. Marilag City is made up, and nothing you enter leaves this browser.</p>
-            <label className="p-demo-state">
-              When you submit
-              <select value={outcome} onChange={(e) => setOutcome(e.target.value as Outcome)}>
-                <option value="ok">It’s sent</option>
-                <option value="error">Server error</option>
-                <option value="offline">Act as offline</option>
-              </select>
-            </label>
-            {slug === 'done' && sub && sub.stage < STAGES.length && (
-              <button type="button" className="p-demo-btn" onClick={() => saveSub({ ...sub, stage: sub.stage + 1 })}>Move status forward</button>
-            )}
-            <Link to="/demo">Back to demo screens</Link>
-          </div>
-        </div>
+        <DemoBar wrap="p-wrap" note="Marilag City is made up. Nothing you enter leaves your browser.">
+          <label className="demobar-control">
+            On submit
+            <select value={outcome} onChange={(e) => setOutcome(e.target.value as Outcome)}>
+              <option value="ok">It’s sent</option>
+              <option value="error">Server error</option>
+              <option value="offline">Offline</option>
+            </select>
+          </label>
+          {slug === 'done' && sub && sub.stage < STAGES.length && (
+            <button type="button" className="demobar-btn" onClick={() => saveSub({ ...sub, stage: sub.stage + 1 })}>Move status forward</button>
+          )}
+        </DemoBar>
 
         <header className="p-top">
           <div className="p-wrap p-top-row">
@@ -415,7 +400,6 @@ function Start({ draft, clear }: { draft: Draft; clear: () => void }) {
   return (
     <main id="permit-main" className="p-wrap p-start">
       <section className="p-intro" aria-labelledby="p-start-h">
-        <p className="p-eyebrow">{t.office}</p>
         <h1 id="p-start-h" tabIndex={-1}>{t.start.title}</h1>
         <p className="p-lede">{t.start.lede}</p>
         <ul className="p-facts">
@@ -614,7 +598,7 @@ function StepPage({ i, path, draft, update, offline, outcome, onSent }: {
                 <Text name="middleName" label={t.middleName} autoComplete="additional-name" value={draft.middleName} onChange={set('middleName')} />
                 <Text name="lastName" label={t.lastName} autoComplete="family-name" value={draft.lastName} onChange={set('lastName')} error={e('lastName')} />
               </fieldset>
-              <Text name="mobile" label={t.mobile} hint={t.mobileHint} type="tel" inputMode="tel" autoComplete="tel-national" value={draft.mobile} onChange={set('mobile')} error={e('mobile')}
+              <Text name="mobile" short label={t.mobile} hint={t.mobileHint} type="tel" inputMode="tel" autoComplete="tel-national" value={draft.mobile} onChange={set('mobile')} error={e('mobile')}
                 ok={normMobile(draft.mobile) ? t.mobileOk(fmtMobile(normMobile(draft.mobile))) : undefined} />
               <Text name="email" label={t.email} hint={t.emailHint} type="email" inputMode="email" autoComplete="email" spellCheck={false} value={draft.email} onChange={set('email')} error={e('email')} />
             </>}
@@ -662,10 +646,12 @@ function StepPage({ i, path, draft, update, offline, outcome, onSent }: {
                 <span className="p-meter" aria-hidden="true"><span style={{ transform: `scaleX(${uploaded / DOC_IDS.length})` }} /></span>
                 <p className="p-meter-text">{t.docsProgress(uploaded, DOC_IDS.length)}</p>
               </div>
-              {DOC_IDS.map((k) => (
-                <FileField key={k} k={k} label={docLabel(k)} value={draft.docs[k]} error={e(`doc-${k}`)} offline={offline} update={update}
-                  hint={k === 'place' && draft.premises ? t.docHints[draft.premises === 'rent' ? 'placeRent' : 'placeOwn'] : t.docHints[k]} />
-              ))}
+              <div className="p-panel p-docs">
+                {DOC_IDS.map((k) => (
+                  <FileField key={k} k={k} label={docLabel(k)} value={draft.docs[k]} error={e(`doc-${k}`)} offline={offline} update={update}
+                    hint={k === 'place' && draft.premises ? t.docHints[draft.premises === 'rent' ? 'placeRent' : 'placeOwn'] : t.docHints[k]} />
+                ))}
+              </div>
             </>}
 
             {step === 'payment' && <>
@@ -739,9 +725,12 @@ function Review({ draft: d, docLabel, error, update }: { draft: Draft; docLabel:
             <h2 id={`p-r-${slug}`}>{t.steps[slug]}</h2>
             <Link to={`${BASE}/${slug}?from=check`} className="p-change">{t.change}<span className="visually-hidden"> {t.steps[slug]}</span></Link>
           </div>
-          <dl>
-            {rows.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v || <span className="p-missing">{t.notAnswered}</span>}</dd></div>)}
-          </dl>
+          {/* A section nobody has touched is one line, not a column of "Not answered". The optional email shows as "–". */}
+          {rows.every(([, v]) => !v || v === '–')
+            ? <p className="p-review-empty p-missing">{t.notStarted}</p>
+            : <dl>
+                {rows.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v || <span className="p-missing">{t.notAnswered}</span>}</dd></div>)}
+              </dl>}
         </section>
       ))}
     </div>

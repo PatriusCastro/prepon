@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useRef, type ReactNode } from 'react';
+import { StrictMode, Suspense, lazy, useEffect, useRef, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Link, usePath, href } from './router';
 import { Download } from 'lucide-react';
@@ -7,9 +7,8 @@ import { CursorLens } from './ui';
 import { Home } from './pages/Home';
 import { DocsIndex, DocPage } from './pages/Docs';
 import { DemoIndex, Gallery, NotFound } from './pages/Placeholders';
-import { FleetLogin, FleetDashboard } from './demos/fleet/Fleet';
-import { Permit, permitTitle } from './demos/permit/Permit';
-import { Expenses } from './demos/expenses/Expenses';
+import { permitTitle } from './demos/permit/title';
+import { version } from '../../plugins/prepon/.claude-plugin/plugin.json';
 import '@fontsource/ibm-plex-sans/latin-400.css';
 import '@fontsource/ibm-plex-sans/latin-500.css';
 import '@fontsource/ibm-plex-sans/latin-600.css';
@@ -17,6 +16,13 @@ import '@fontsource/ibm-plex-sans/latin-600.css';
 import '@fontsource/ibm-plex-sans/greek-400.css';
 import '@fontsource/ibm-plex-sans/greek-500.css';
 import './styles.css';
+
+// Demos load on demand so docs visitors don't download Leaflet and three apps.
+const fleet = () => import('./demos/fleet/Fleet');
+const FleetLogin = lazy(() => fleet().then((m) => ({ default: m.FleetLogin })));
+const FleetDashboard = lazy(() => fleet().then((m) => ({ default: m.FleetDashboard })));
+const Permit = lazy(() => import('./demos/permit/Permit').then((m) => ({ default: m.Permit })));
+const Expenses = lazy(() => import('./demos/expenses/Expenses').then((m) => ({ default: m.Expenses })));
 
 function page(path: string): [string, ReactNode] {
   if (path === '/') return ['Prepon: fitting UI design for Claude Code', <Home />];
@@ -46,14 +52,25 @@ function App() {
     prev.current = path;
     // On client-side navigation, move focus to the new page's heading so screen readers announce it.
     scrollTo(0, 0);
-    main.current?.querySelector<HTMLElement>('h1')?.focus();
+    // A lazy demo may still be loading (Suspense keeps the old page in the DOM, hidden), so focus the
+    // first visible h1, waiting for it to render if needed.
+    const root = main.current!;
+    const focusH1 = () => {
+      const h = [...root.querySelectorAll<HTMLElement>('h1')].find((e) => e.getClientRects().length);
+      h?.focus();
+      return !!h;
+    };
+    if (focusH1()) return;
+    const mo = new MutationObserver(() => focusH1() && mo.disconnect());
+    mo.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+    return () => mo.disconnect();
   }, [path, title]);
 
   const section = '/' + (path.split('/')[1] ?? '');
   const nav = [['/docs', 'Docs'], ['/demo', 'Demo screens'], ['/gallery', 'Before/after']];
 
   // The demos are their own made-up products, so they render without the site's header and footer.
-  if (/^\/demo\/(fleet|permit|expenses)(\/|$)/.test(path)) return <div ref={main}>{content}</div>;
+  if (/^\/demo\/(fleet|permit|expenses)(\/|$)/.test(path)) return <div ref={main}><Suspense fallback={null}>{content}</Suspense></div>;
 
   return (
     <div className="site">
@@ -62,7 +79,7 @@ function App() {
         <div className="wrap header-row">
           <div className="brand">
             <Link to="/" className="wordmark"><span className="wordmark-mark" aria-hidden="true">π</span>Prepon</Link>
-            <span className="header-version">v0.1.0</span>
+            <span className="header-version">v{version}</span>
           </div>
           <nav className="site-nav" aria-label="Site">
             <ul>
@@ -81,10 +98,10 @@ function App() {
           </div>
         </div>
       </header>
-      <main id="main" ref={main}>{content}</main>
+      <main id="main" ref={main}><Suspense fallback={null}>{content}</Suspense></main>
       <footer className="site-footer">
         <div className="wrap footer-row">
-          <p>Prepon 0.1.0, a Claude Code plugin, built with its own build mode.</p>
+          <p>Prepon {version}, a Claude Code plugin, built with its own build mode.</p>
           <p>Design rationale: <code>site/README.md</code></p>
         </div>
       </footer>

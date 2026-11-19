@@ -11,6 +11,7 @@ import {
   Phone, RefreshCw, Search, TriangleAlert, Truck, Users, Warehouse, WifiOff, X, type LucideIcon,
 } from 'lucide-react';
 import { Link, navigate } from '../../router';
+import { DemoBar } from '../DemoBar';
 import { useOnline } from '../useOnline';
 import { DEPOT, LAST_GOOD, PLACES, SHIFT, USER, VEHICLES, type LatLng, type Severity, type Vehicle } from './data';
 import './fleet.css';
@@ -30,17 +31,7 @@ const useWide = () => useSyncExternalStore((cb) => {
   return () => m.removeEventListener('change', cb);
 }, () => matchMedia(WIDE).matches);
 
-function DemoBar({ children }: { children?: ReactNode }) {
-  return (
-    <div className="f-demobar">
-      <div className="f-demobar-row">
-        <p><Info className="f-icon" aria-hidden />Prepon demo. Larkmoor Freight is a made-up company and every name and number here is fictional.</p>
-        {children}
-        <Link to="/demo" className="f-demobar-back"><ArrowLeft className="f-icon" aria-hidden />Back to demo screens</Link>
-      </div>
-    </div>
-  );
-}
+const NOTE = 'Larkmoor Freight is made up, and so is every name and number on these screens.';
 
 function Wordmark() {
   return (
@@ -228,16 +219,15 @@ export function FleetLogin() {
   return (
     <div className="fleet f-entry">
       <a className="skip" href="#fleet-main">Skip to sign in</a>
-      <DemoBar />
+      <DemoBar note={NOTE} />
       <main id="fleet-main" className="f-login">
         <div className="f-login-pane">
           <div className="f-login-col">
             <header className="f-login-brand"><Wordmark /></header>
             <div className="f-login-form">
               <div className="f-login-intro">
-                <p className="f-eyebrow">{DEPOT.name} · Calder Mills · Fenwick Quay</p>
                 <h1 tabIndex={-1}>Sign in to dispatch</h1>
-                <p className="f-lede">For Larkmoor dispatchers and shift supervisors.</p>
+                <p className="f-lede">For Larkmoor dispatchers and shift supervisors at Northgate, Calder Mills, and Fenwick Quay.</p>
               </div>
 
               {!online && (
@@ -434,12 +424,19 @@ function FleetMap({ vehicles, acks, selected, onOpen }: {
     // Vehicles are a fixed set while this map is mounted; acks and selection only change marker content, which the portals handle.
   }, []);
 
-  // Opening a vehicle brings it into view, so the detail and its place on the map are read together.
+  // Opening a vehicle brings it and the way still to go into view, so the detail and its place on the map are read together.
+  // ponytail: straight line to the destination, not the road route; swap in the routing service's geometry when there is one.
+  const dest = PLACES.find((p) => road.find((r) => r.id === selected)?.route.endsWith(p.name));
   useEffect(() => {
     const v = road.find((r) => r.id === selected);
     const map = mapRef.current;
-    if (!v || !map || map.getBounds().pad(-0.15).contains(v.at)) return;
-    map.panTo(v.at, { animate: !matchMedia('(prefers-reduced-motion: reduce)').matches, duration: 0.3 });
+    if (!v || !map) return;
+    const line = dest && L.polyline([v.at, dest.at], { className: 'f-route', interactive: false }).addTo(map);
+    const want = L.latLngBounds([v.at, dest?.at ?? v.at]);
+    if (!map.getBounds().pad(-0.15).contains(want)) {
+      map.fitBounds(want, { animate: !matchMedia('(prefers-reduced-motion: reduce)').matches, maxZoom: map.getZoom(), paddingTopLeft: [40, 72], paddingBottomRight: [64, 40] });
+    }
+    return () => { line?.remove(); };
   }, [selected]);
 
   return (
@@ -448,7 +445,7 @@ function FleetMap({ vehicles, acks, selected, onOpen }: {
         {`Map: ${road.length} vehicles on the road and ${atDepot} at ${DEPOT.name}. Needing attention: ${flagged.map((v) => `${v.id}, ${v.issue!.kind}`).join('; ') || 'none'}. The same vehicles are listed in Needs attention and All vehicles.`}
       </p>
       <div ref={box} className="f-map" aria-label="Vehicle map. Arrow keys pan, plus and minus zoom." />
-      {PLACES.map((p) => createPortal(<span className={placeClass(p.at)}>{p.name}</span>, slot(p.name), p.name))}
+      {PLACES.map((p) => createPortal(<span className={`${placeClass(p.at)}${p === dest ? ' f-place--dest' : ''}`}>{p.name}</span>, slot(p.name), p.name))}
       {createPortal(<span className="f-depot"><span className="f-depot-mark"><Warehouse /></span>Northgate · {atDepot}</span>, slot('depot'), 'depot')}
       {road.map((v) => {
         const a = acks[v.id];
@@ -733,9 +730,9 @@ export function FleetDashboard() {
   return (
     <div className="fleet f-app">
       <a className="skip" href="#fleet-main">Skip to dashboard</a>
-      <DemoBar>
-        <label className="f-demo-state">
-          Show state
+      <DemoBar note={NOTE}>
+        <label className="demobar-control">
+          Preview
           <select value={demo} onChange={(e) => { setDemo(e.target.value as DemoState); setSince(4); }}>
             <option value="live">Live data</option>
             <option value="loading">Loading</option>

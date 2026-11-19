@@ -30,9 +30,6 @@
   --f-warn: #855400;
   --f-warn-bg: #fcf0d6;
   --f-warn-line: #ecd59f;
-  --f-demo: #2b2f2d;
-  --f-demo-raised: #3b403d;
-  --f-demo-soft: #c9cdc6;
   --f-scrim: rgb(26 31 28 / 0.45);
 
   --f-shadow-rest: 0 1px 2px rgb(26 31 28 / 0.05);
@@ -101,8 +98,6 @@
     --f-shadow-float: 0 16px 40px rgb(0 0 0 / 0.55), 0 2px 8px rgb(0 0 0 / 0.35);
     color-scheme: dark;
   }
-  /* The demo bar is already dark in both themes; keep its light text. */
-  .fleet .f-demobar { --f-on-brand: #f3f2ee; }
 }
 
 /* Reset the site's element styles inside the demo. */
@@ -114,7 +109,6 @@
 .fleet li { margin: 0; }
 .fleet a { color: var(--f-brand); text-underline-offset: 0.18em; }
 .fleet :focus-visible { outline: 2px solid var(--f-brand); outline-offset: 2px; }
-.fleet .f-demobar :focus-visible { outline-color: var(--f-on-brand); }
 /* Headings get programmatic focus on navigation and from the bell, the tally, and the detail so screen readers
    announce them; they aren't controls. Same as the permit demo. */
 /* prepon-ignore outline-removed */
@@ -123,20 +117,6 @@
 .fleet .f-icon { width: 1.15em; height: 1.15em; flex: none; }
 .fleet .f-crit { color: var(--f-crit); }
 .fleet .f-warn { color: var(--f-warn); }
-
-/* Demo bar: says what this is, outside the product's own chrome. */
-.fleet .f-demobar { background: var(--f-demo); color: var(--f-on-brand); font-size: var(--f-t-sm); }
-.fleet .f-demobar-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--f-2) var(--f-4); padding: var(--f-2) var(--f-4); }
-.fleet .f-demobar p { flex: 1 1 18rem; display: flex; gap: var(--f-2); align-items: flex-start; }
-.fleet .f-demobar p .f-icon { margin-top: 0.15em; color: var(--f-demo-soft); }
-.fleet .f-demobar-back {
-  display: inline-flex; align-items: center; gap: var(--f-2); min-height: var(--f-target); padding-inline: var(--f-3);
-  color: var(--f-on-brand); text-decoration: none; font-weight: 500; border-radius: var(--f-r-control);
-  transition: background-color var(--f-fast) var(--f-ease-out);
-}
-.fleet .f-demobar-back:hover { background: var(--f-demo-raised); }
-.fleet .f-demo-state { display: inline-flex; align-items: center; gap: var(--f-2); color: var(--f-demo-soft); }
-.fleet .f-demo-state select { background-color: var(--f-demo-raised); color: var(--f-on-brand); border-color: var(--f-demo-soft); }
 
 /* Native selects, styled */
 .fleet select {
@@ -290,7 +270,6 @@
 .fleet .f-login-form { display: grid; gap: var(--f-4); }
 .fleet .f-login-intro { display: grid; gap: var(--f-2); }
 /* The overline names the depots this sign-in serves; tiny caps with tracking is the one place caps are used. */
-.fleet .f-eyebrow { font-size: var(--f-t-xs); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--f-brand); }
 .fleet .f-login h1 { font-size: var(--f-t-2xl); line-height: 1.15; letter-spacing: -0.02em; }
 .fleet .f-lede { color: var(--f-muted); }
 /* Field icons: the leading icon takes the brand color with the focus ring, so the active field reads at a glance. */
@@ -481,6 +460,9 @@
   text-shadow: 0 0 2px var(--f-surface), 0 0 3px var(--f-surface), 0 0 6px var(--f-surface);
 }
 .fleet .f-place--below { transform: translateY(0.9rem); }
+/* The open vehicle's destination and the way still to go, in the selection color. Dashed: it's the direction, not the road. */
+.fleet .f-place--dest { color: var(--f-brand); }
+.fleet .f-route { stroke: var(--f-brand); stroke-width: 3; stroke-opacity: 0.85; stroke-dasharray: 2 7; stroke-linecap: round; }
 .fleet .f-depot {
   display: inline-flex; align-items: center; gap: var(--f-1); padding: 2px var(--f-2) 2px 2px; color: var(--f-ink);
   font-size: var(--f-t-xs); font-weight: 600; background: var(--f-surface); border-radius: var(--f-r-pill); box-shadow: var(--f-shadow-raised);
@@ -490,7 +472,7 @@
   background: var(--f-brand); color: var(--f-on-brand);
 }
 .fleet .f-depot-mark svg { width: 0.8rem; height: 0.8rem; }
-.fleet .f-dot { display: block; width: 0.75rem; height: 0.75rem; border-radius: var(--f-r-pill); background: var(--f-muted); box-shadow: var(--f-shadow-dot); }
+.fleet .f-dot { display: block; width: 0.75rem; height: 0.75rem; border-radius: var(--f-r-pill); background: var(--f-brand); box-shadow: var(--f-shadow-dot); }
 .fleet .f-dot--static { display: inline-block; width: 0.625rem; height: 0.625rem; }
 .fleet .f-flag {
   display: inline-flex; align-items: center; gap: var(--f-1); min-height: 1.5rem; padding: 0 var(--f-2) 0 0.3rem; color: var(--f-ink);

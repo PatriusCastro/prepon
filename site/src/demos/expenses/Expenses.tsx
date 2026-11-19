@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type ReactNode } from 'react';
 import {
-  ArrowLeft, Check, ChevronLeft, ChevronRight, CircleCheck, CircleX, Clock, CloudUpload, OctagonAlert, Receipt,
+  Check, ChevronLeft, ChevronRight, CircleCheck, CircleX, Clock, CloudUpload, OctagonAlert, Receipt,
   RotateCw, Search, TriangleAlert, WifiOff, X, type LucideIcon,
 } from 'lucide-react';
-import { Link } from '../../router';
+import { DemoBar } from '../DemoBar';
 import { useOnline } from '../useOnline';
 import './expenses.css';
 
@@ -52,12 +52,14 @@ const VIEWS: View[] = ['Pending', 'Approved', 'Rejected', 'All'];
 const STATUS_ICON: Record<Status, LucideIcon> = { Pending: Clock, Approved: CircleCheck, Rejected: CircleX };
 const PAGE = 10;
 
-// Phones get "Load more"; from 768px the list pages.
+// Phones get "Load more"; from 768px the list pages; from 1024px the claim stays open in a pane beside the queue.
 const wideQuery = matchMedia('(min-width: 48rem)');
-const useWide = () => useSyncExternalStore(
-  (cb) => { wideQuery.addEventListener('change', cb); return () => wideQuery.removeEventListener('change', cb); },
-  () => wideQuery.matches,
+const deskQuery = matchMedia('(min-width: 64rem)');
+const useMedia = (mq: MediaQueryList) => useSyncExternalStore(
+  (cb) => { mq.addEventListener('change', cb); return () => mq.removeEventListener('change', cb); },
+  () => mq.matches,
 );
+const initials = (name: string) => name.split(' ').map((w) => w[0]).join('');
 
 function readUrl() {
   const p = new URLSearchParams(location.search);
@@ -81,7 +83,8 @@ export function Expenses() {
   const [rejectId, setRejectId] = useState<number | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const toastTimer = useRef(0);
-  const wide = useWide();
+  const wide = useMedia(wideQuery);
+  const desk = useMedia(deskQuery);
   const online = useOnline();
   const offline = !online || demo === 'offline';
 
@@ -118,12 +121,15 @@ export function Expenses() {
   const at = Math.min(page, pages);
   const shown = wide ? list.slice((at - 1) * PAGE, at * PAGE) : list.slice(0, at * PAGE);
   const pending = items.filter((x) => x.status === 'Pending');
+  const flagged = pending.filter((x) => x.flag).length;
+  const oldest = Math.max(0, ...pending.map((x) => daysAgo(x.submitted)));
 
   const decide = (c: Claim, status: Status, reason?: string) => {
     // Focus moves to the next claim, since this row leaves the Pending list.
     const next = shown[shown.findIndex((x) => x.id === c.id) + 1] ?? shown[shown.findIndex((x) => x.id === c.id) - 1];
     setItems((xs) => xs.map((x) => (x.id === c.id ? { ...x, status, reason, queued: offline } : x)));
-    setOpenId(null);
+    // On desktop the pane moves on to the next claim, so the approver works down the queue without reopening anything.
+    setOpenId(desk ? next?.id ?? null : null);
     setRejectId(null);
     const verb = status === 'Approved' ? 'Approved' : 'Rejected';
     say({ text: `${verb} #${c.id}, ${c.who}, ${money(c.amount)}.${offline ? ' Saved on this device; it will send when you’re back online.' : ''}`, undo: c });
@@ -136,26 +142,23 @@ export function Expenses() {
   };
 
   const choose = (v: View) => { setView(v); setPage(1); };
-  const open = items.find((x) => x.id === openId);
+  // The desktop pane always shows a claim from the current list: the one picked, else the first.
+  const open = desk ? (demo === 'ok' ? shown.find((x) => x.id === openId) ?? shown[0] : undefined) : items.find((x) => x.id === openId);
   const rejecting = items.find((x) => x.id === rejectId);
 
   return (
     <div className="expenses">
-      <div className="ex-demobar">
-        <div className="ex-wrap ex-demobar-row">
-          <p>Prepon demo. Ashby &amp; Lowe and these claims are made up, and nothing leaves this browser.</p>
-          <label className="ex-demo-state">
-            Show
-            <select value={demo} onChange={(e) => setDemo(e.target.value as Demo)}>
-              <option value="ok">Claims</option>
-              <option value="loading">Loading</option>
-              <option value="error">Server error</option>
-              <option value="offline">Act as offline</option>
-            </select>
-          </label>
-          <Link to="/demo" className="ex-demobar-back"><ArrowLeft aria-hidden />Back to demo screens</Link>
-        </div>
-      </div>
+      <DemoBar wrap="ex-wrap" note="Ashby & Lowe and its claims are made up. Nothing leaves your browser.">
+        <label className="demobar-control">
+          Preview
+          <select value={demo} onChange={(e) => setDemo(e.target.value as Demo)}>
+            <option value="ok">Claims</option>
+            <option value="loading">Loading</option>
+            <option value="error">Server error</option>
+            <option value="offline">Offline</option>
+          </select>
+        </label>
+      </DemoBar>
 
       <header className="ex-top">
         <div className="ex-wrap ex-top-row">
@@ -166,10 +169,14 @@ export function Expenses() {
 
       <main className="ex-wrap ex-main">
         <h1 tabIndex={-1}>Expense approvals</h1>
-        <p className="ex-lede">
-          {pending.length === 0 ? 'Nothing is waiting for you.'
-            : <><strong>{pending.length} claims</strong> waiting for your decision, <strong>{money(pending.reduce((s, x) => s + x.amount, 0))}</strong> in total.</>}
-        </p>
+        {pending.length === 0 ? <p className="ex-lede">Nothing is waiting for you.</p> : (
+          <dl className="ex-stats">
+            <div><dt>Waiting for you</dt><dd>{pending.length} {pending.length === 1 ? 'claim' : 'claims'}</dd></div>
+            <div><dt>In total</dt><dd>{money(pending.reduce((s, x) => s + x.amount, 0))}</dd></div>
+            <div className={flagged ? 'ex-stat--warn' : undefined}><dt>Policy flags</dt><dd>{flagged}</dd></div>
+            <div><dt>Oldest waiting</dt><dd>{oldest === 0 ? 'Today' : `${oldest} ${oldest === 1 ? 'day' : 'days'}`}</dd></div>
+          </dl>
+        )}
 
         {offline && (
           <div className="ex-banner ex-banner--warn" role="status">
@@ -197,6 +204,7 @@ export function Expenses() {
           </div>
         </div>
 
+        <div className="ex-split">
         <section className={`ex-list${view === 'Pending' ? ' ex-list--pending' : ''}`} aria-labelledby="ex-list-h" aria-busy={demo === 'loading' || undefined}>
           <h2 id="ex-list-h" tabIndex={-1} className="visually-hidden">{view === 'All' ? 'All claims' : `${view} claims`}</h2>
           {demo === 'loading' ? <Skeleton />
@@ -220,16 +228,23 @@ export function Expenses() {
               <>
                 <ul>
                   {shown.map((c) => (
-                    <Row key={c.id} c={c} view={view} onOpen={() => setOpenId(c.id)} onApprove={() => decide(c, 'Approved')} onReject={() => setRejectId(c.id)} />
+                    <Row key={c.id} c={c} view={view} selected={desk && open?.id === c.id} onOpen={() => setOpenId(c.id)} onApprove={() => decide(c, 'Approved')} onReject={() => setRejectId(c.id)} />
                   ))}
                 </ul>
                 <Pager wide={wide} total={list.length} page={at} pages={pages} shownCount={shown.length} setPage={setPage} />
               </>
             )}
         </section>
+        {desk && (
+          <aside className="ex-pane" aria-label="Claim details">
+            {open ? <Detail c={open} onApprove={() => decide(open, 'Approved')} onReject={() => setRejectId(open.id)} />
+              : <p className="ex-pane-empty ex-muted">{demo === 'ok' ? 'No claim selected.' : 'Claim details appear here once claims load.'}</p>}
+          </aside>
+        )}
+        </div>
       </main>
 
-      <Sheet open={!!open} onClose={() => setOpenId(null)} className="ex-detail" label={open && `Claim #${open.id}`}>
+      <Sheet open={!desk && !!open} onClose={() => setOpenId(null)} className="ex-detail" label={open && `Claim #${open.id}`}>
         {open && <Detail c={open} onApprove={() => decide(open, 'Approved')} onReject={() => setRejectId(open.id)} close={() => setOpenId(null)} />}
       </Sheet>
 
@@ -258,11 +273,12 @@ function Pill({ c }: { c: Claim }) {
   return <span className={`ex-pill ex-pill--${c.status.toLowerCase()}`}><Icon aria-hidden />{c.status}{c.queued && ', not sent yet'}</span>;
 }
 
-function Row({ c, view, onOpen, onApprove, onReject }: { c: Claim; view: View; onOpen: () => void; onApprove: () => void; onReject: () => void }) {
+function Row({ c, view, selected, onOpen, onApprove, onReject }: { c: Claim; view: View; selected: boolean; onOpen: () => void; onApprove: () => void; onReject: () => void }) {
   const name = <span className="visually-hidden"> claim #{c.id} from {c.who}, {money(c.amount)}</span>;
   return (
     <li className="ex-row">
-      <button type="button" id={`ex-open-${c.id}`} className="ex-row-open" onClick={onOpen}>
+      <button type="button" id={`ex-open-${c.id}`} className="ex-row-open" onClick={onOpen} aria-current={selected || undefined}>
+        <span className="ex-avatar ex-row-avatar" aria-hidden>{initials(c.who)}</span>
         <span className="ex-row-who">{c.who}</span>
         <span className="ex-row-amount">{money(c.amount)}</span>
         <span className="ex-row-meta">{c.what} · {c.category} · {short(c.submitted)} · #{c.id}</span>
@@ -308,11 +324,11 @@ function Pager({ wide, total, page, pages, shownCount, setPage }: { wide: boolea
   );
 }
 
-function Detail({ c, onApprove, onReject, close }: { c: Claim; onApprove: () => void; onReject: () => void; close: () => void }) {
+function Detail({ c, onApprove, onReject, close }: { c: Claim; onApprove: () => void; onReject: () => void; close?: () => void }) {
   return <>
     <div className="ex-sheet-head">
       <h2>{c.what}</h2>
-      <button type="button" className="ex-icon-btn" onClick={close} aria-label="Close"><X aria-hidden /></button>
+      {close && <button type="button" className="ex-icon-btn" onClick={close} aria-label="Close"><X aria-hidden /></button>}
     </div>
     <div className="ex-sheet-body">
       <p className="ex-detail-amount">{money(c.amount)}</p>

@@ -1,0 +1,36 @@
+/* Prepon's demo bar (DemoBar.tsx). Dark in both themes, so it reads as the site's frame around the made-up product.
+   Rules are two classes deep so they beat each demo's element resets (.expenses a, .fleet :focus-visible). */
+
+.demobar {
+  --db-bg: #1f2529; --db-raised: #343c42; --db-soft: #c6cdd2; --db-ink: #ffffff;
+  background: var(--db-bg); color: var(--db-ink); font-size: 0.875rem; line-height: 1.4; color-scheme: dark;
+}
+.demobar .demobar-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0 1rem; padding: 0.25rem 1rem; }
+.demobar .demobar-back {
+  display: inline-flex; align-items: center; gap: 0.375rem; min-height: 2.75rem; padding-inline: 0.5rem; margin-inline-start: -0.5rem;
+  color: var(--db-ink); font-weight: 600; text-decoration: none; border-radius: 6px; transition: background-color 120ms;
+}
+.demobar .demobar-back:hover { background: var(--db-raised); }
+.demobar .demobar-back svg { flex: none; width: 1rem; height: 1rem; }
+/* Phones: the way back and the controls share the first line; the note gets its own. */
+.demobar .demobar-note { order: 3; flex: 1 1 100%; margin: 0; padding-bottom: 0.5rem; color: var(--db-soft); }
+.demobar .demobar-tag {
+  display: inline-block; margin-inline-end: 0.5rem; padding-inline: 0.375rem;
+  color: var(--db-ink); font-weight: 600; border: 1px solid var(--db-soft); border-radius: 4px;
+}
+.demobar .demobar-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; margin-inline-start: auto; }
+.demobar .demobar-control { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--db-soft); }
+.demobar .demobar-row select, .demobar .demobar-btn {
+  min-height: 2.75rem; padding-inline: 0.5rem; font: inherit; color: var(--db-ink); cursor: pointer;
+  appearance: auto; background: var(--db-raised); border: 1px solid var(--db-soft); border-radius: 6px; /* native arrow, whatever the demo's select styling */
+}
+.demobar .demobar-btn { padding-inline: 0.75rem; font-weight: 600; cursor: pointer; transition: border-color 120ms; }
+.demobar .demobar-btn:hover { border-color: var(--db-ink); }
+.demobar .demobar-row :focus-visible { outline: 2px solid var(--db-ink); outline-offset: 2px; }
+
+@media (min-width: 48rem) {
+  .demobar .demobar-note { order: 0; flex: 1 1 16rem; padding-bottom: 0; }
+}
+@media print {
+  .demobar { display: none; }
+}

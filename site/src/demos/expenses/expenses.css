@@ -69,24 +69,13 @@
 .expenses :focus-visible { outline: 3px solid var(--ex-brand); outline-offset: 2px; }
 /* The h1 and list heading take focus only so screen readers announce them; they aren't controls. prepon-ignore outline-removed */
 .expenses h1[tabindex='-1']:focus, .expenses h2[tabindex='-1']:focus { outline: none; }
-.expenses .ex-demobar :focus-visible, .expenses .ex-toast :focus-visible { outline-color: var(--ex-demo-soft); }
+.expenses .ex-toast :focus-visible { outline-color: var(--ex-demo-soft); }
 .expenses svg { flex: none; width: 1.25rem; height: 1.25rem; }
 .expenses button { font: inherit; color: inherit; }
 
 .expenses .ex-wrap { width: 100%; max-width: 72rem; margin-inline: auto; padding-inline: var(--ex-4); }
 .expenses .ex-muted { color: var(--ex-muted); }
 
-/* Demo bar: same pattern as the fleet and permit demos. */
-.expenses .ex-demobar { background: var(--ex-demo); color: var(--ex-on-dark); font-size: var(--ex-t-sm); }
-.expenses .ex-demobar-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ex-1) var(--ex-4); padding-block: var(--ex-2); }
-.expenses .ex-demobar p { flex: 1 1 18rem; }
-.expenses .ex-demobar-back { display: inline-flex; align-items: center; gap: var(--ex-1); min-height: 2.75rem; color: var(--ex-on-dark); }
-.expenses .ex-demobar-back svg { width: 1rem; height: 1rem; }
-.expenses .ex-demo-state { display: inline-flex; align-items: center; gap: var(--ex-2); color: var(--ex-demo-soft); }
-.expenses .ex-demo-state select {
-  min-height: 2.75rem; padding-inline: var(--ex-2); font: inherit; color: var(--ex-on-dark);
-  background: var(--ex-demo-raised); border: 1px solid var(--ex-demo-soft); border-radius: var(--ex-r-control);
-}
 
 /* App header */
 .expenses .ex-top { background: var(--ex-surface); border-bottom: 1px solid var(--ex-line); }
@@ -108,7 +97,15 @@
 /* Bottom padding keeps the end of the list clear of the toast. */
 .expenses .ex-main { padding-block: var(--ex-5) 6rem; }
 .expenses .ex-lede { margin-top: var(--ex-1); color: var(--ex-muted); }
-.expenses .ex-lede strong { color: var(--ex-ink); font-weight: 600; }
+/* Queue summary: one surface split by hairlines (the 1px gap shows the line colour), not a row of cards. */
+.expenses .ex-stats {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: var(--ex-4) 0 0;
+  background: var(--ex-line); border: 1px solid var(--ex-line); border-radius: var(--ex-r-card); overflow: hidden;
+}
+.expenses .ex-stats div { padding: var(--ex-3) var(--ex-4); background: var(--ex-surface); }
+.expenses .ex-stats dt { color: var(--ex-muted); font-size: var(--ex-t-sm); }
+.expenses .ex-stats dd { margin: 0; font-size: var(--ex-t-xl); font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+.expenses .ex-stats .ex-stat--warn dd { color: var(--ex-warn); }
 
 .expenses .ex-banner { display: flex; gap: var(--ex-3); align-items: flex-start; padding: var(--ex-3) var(--ex-4); border: 1px solid; border-radius: var(--ex-r-card); }
 .expenses .ex-main > .ex-banner { margin-top: var(--ex-4); }
@@ -188,10 +185,13 @@
 .expenses .ex-row:first-child { border-top: 0; }
 .expenses .ex-row-open {
   flex: 1; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--ex-1) var(--ex-3); align-items: center;
-  padding: var(--ex-3) var(--ex-4); border: 0; background: transparent; text-align: left; cursor: pointer;
+  position: relative; padding: var(--ex-3) var(--ex-4) var(--ex-3) calc(var(--ex-4) + 2rem + var(--ex-3));
+  border: 0; background: transparent; text-align: left; cursor: pointer;
   transition: background-color var(--ex-fast);
 }
 .expenses .ex-row-open:hover { background: var(--ex-sunk); }
+.expenses .ex-row-open[aria-current='true'] { background: var(--ex-brand-tint); }
+.expenses .ex-row-avatar { position: absolute; left: var(--ex-4); top: var(--ex-3); }
 .expenses .ex-row-open:focus-visible { outline-offset: -3px; }
 .expenses .ex-row-who { font-weight: 600; overflow-wrap: anywhere; }
 .expenses .ex-row-amount { font-weight: 600; text-align: right; }
@@ -256,7 +256,7 @@
 .expenses .ex-confirm { height: auto; top: auto; bottom: 0; border-radius: var(--ex-r-card) var(--ex-r-card) 0 0; }
 .expenses .ex-detail-amount { font-size: var(--ex-t-xl); font-weight: 600; line-height: 1.2; }
 .expenses .ex-detail-who { color: var(--ex-muted); margin-top: calc(-1 * var(--ex-3)); }
-.expenses .ex-detail .ex-pill { justify-self: start; }
+.expenses .ex-sheet-body > .ex-pill { justify-self: start; }
 .expenses .ex-facts { margin: 0; border-top: 1px solid var(--ex-line); }
 .expenses .ex-facts div { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: var(--ex-3); padding-block: var(--ex-2); border-bottom: 1px solid var(--ex-line); }
 .expenses .ex-facts dt { color: var(--ex-muted); }
@@ -302,13 +302,13 @@
 .expenses .ex-toast-close { color: var(--ex-demo-soft); }
 
 @keyframes ex-up { from { opacity: 0; transform: translateY(12px); } }
-@keyframes ex-side { from { opacity: 0; transform: translateX(24px); } }
 @keyframes ex-fade { from { opacity: 0; } }
 @keyframes ex-pulse { to { opacity: 0.5; } }
 
 /* 768 and up: inline row actions and numbered pages. Phones decide from the claim sheet's pinned bar. */
 @media (min-width: 48rem) {
   .expenses .ex-wrap { padding-inline: var(--ex-6); }
+  .expenses .ex-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .expenses .ex-user-name { display: inline; }
   .expenses .ex-tabs { display: flex; justify-self: start; }
   .expenses .ex-row-open { grid-template-columns: minmax(0, 1fr) 7rem 7.5rem; }
@@ -328,14 +328,25 @@
 
 @media (min-width: 64rem) {
   .expenses .ex-tools { grid-template-columns: auto minmax(16rem, 24rem); justify-content: space-between; align-items: end; }
-  .expenses .ex-detail { left: auto; right: 0; width: 30rem; border-left: 1px solid var(--ex-line); box-shadow: var(--ex-shadow-float); }
-  .expenses .ex-detail[open] { animation-name: ex-side; }
+  /* Queue and review pane side by side. The pane decides; rows only select, so their inline buttons go. */
+  .expenses .ex-wrap { max-width: 88rem; }
+  .expenses .ex-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 28rem); gap: var(--ex-5); align-items: start; margin-top: var(--ex-4); }
+  .expenses .ex-split .ex-list { margin-top: 0; }
+  .expenses .ex-row-actions { display: none; }
+  .expenses .ex-pane {
+    position: sticky; top: var(--ex-4); display: flex; flex-direction: column; max-height: calc(100vh - 2 * var(--ex-4));
+    background: var(--ex-surface); border: 1px solid var(--ex-line); border-radius: var(--ex-r-card); box-shadow: var(--ex-shadow-rest); overflow: hidden;
+  }
+  .expenses .ex-pane .ex-sheet-body { min-height: 0; order: 2; }
+  /* The decision sits under the heading so it's on screen before any scrolling; phones keep it pinned at the bottom for the thumb. */
+  .expenses .ex-pane .ex-sheet-bar { order: 1; border-top: 0; border-bottom: 1px solid var(--ex-line); }
+  .expenses .ex-pane-empty { padding: var(--ex-6) var(--ex-4); text-align: center; }
   .expenses .ex-toast-region { justify-content: flex-start; left: var(--ex-6); }
 }
 
 /* Last, so it overrides the breakpoint animations. */
 @media (prefers-reduced-motion: reduce) {
-  .expenses .ex-sheet[open], .expenses .ex-detail[open], .expenses .ex-toast { animation-name: ex-fade; }
+  .expenses .ex-sheet[open], .expenses .ex-toast { animation-name: ex-fade; }
   .expenses .ex-skel span { animation: none; }
   .expenses .ex-btn:active { transform: none; }
 }

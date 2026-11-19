@@ -580,7 +580,7 @@ body:has(.hero) .toy-input .section-head { margin-bottom: var(--s-4); }
 .toy-hint { font-size: var(--t-sm); color: var(--muted); }
 /* Editor: mirror (line numbers, highlights) and textarea stacked in one grid cell, wrapping identically. */
 .toy-editor {
-  display: grid; max-height: 30rem; overflow-y: auto; overscroll-behavior: contain; counter-reset: ln;
+  display: grid; max-height: 30rem; overflow-y: auto; counter-reset: ln;
   scrollbar-width: thin; scrollbar-color: var(--code-dim) transparent;
 }
 .toy-editor > * {

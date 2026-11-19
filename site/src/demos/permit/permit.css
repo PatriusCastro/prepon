@@ -25,7 +25,6 @@
   --p-ok-bg: #e5f3ea;
   --p-warn: #8a5300;
   --p-warn-bg: #fcf1dc;
-  --p-demo: #22282e;
 
   --p-font: 'IBM Plex Sans', Roboto, 'Noto Sans', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
   --p-t-xs: 0.8125rem;        /* 13px: the header's office line and the PDF tag only, nothing read at length */
@@ -82,8 +81,6 @@
     --p-shadow-bar: 0 -4px 16px rgb(0 0 0 / 0.5);
     color-scheme: dark;
   }
-  /* The demo bar is dark in both themes; keep its light text. */
-  .permit .p-demobar { --p-on-brand: #ffffff; }
 }
 
 /* Keep focused fields clear of the pinned Continue bar on phones (WCAG 2.4.11). */
@@ -103,7 +100,6 @@ html:has(.permit) { scroll-padding-block: var(--p-4) 9rem; }
 /* Headings and the error summary take focus only so screen readers announce them; they aren't controls, so no ring.
    (The summary has its own red edge.) Every interactive element keeps the ring above. prepon-ignore outline-removed */
 .permit h1[tabindex='-1']:focus, .permit .p-summary:focus { outline: none; }
-.permit .p-demobar :focus-visible { outline-color: var(--p-on-brand); }
 .permit svg { flex: none; }
 
 .permit .visually-hidden {
@@ -121,17 +117,6 @@ html:has(.permit) { scroll-padding-block: var(--p-4) 9rem; }
 .permit .p-hint { display: block; color: var(--p-muted); font-size: var(--p-t-md); font-weight: 400; }
 .permit .p-lede { font-size: var(--p-t-lg); color: var(--p-muted); }
 
-/* Demo bar: says what this is, outside the city's own chrome. Same pattern as the fleet demo. */
-.permit .p-demobar { background: var(--p-demo); color: var(--p-on-brand); font-size: var(--p-t-sm); }
-.permit .p-demobar-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--p-1) var(--p-4); padding-block: var(--p-2); }
-.permit .p-demobar p { flex: 1 1 18rem; }
-.permit .p-demobar a { color: var(--p-on-brand); display: inline-flex; align-items: center; min-height: 2.75rem; }
-.permit .p-demo-state { display: inline-flex; align-items: center; gap: var(--p-2); }
-.permit .p-demo-state select { min-height: 2.75rem; font: inherit; padding-inline: var(--p-2); border-radius: var(--p-r-control); }
-.permit .p-demo-btn {
-  min-height: 2.75rem; padding-inline: var(--p-3); font: inherit; font-weight: 600; color: var(--p-on-brand); cursor: pointer;
-  background: none; border: 1px solid currentColor; border-radius: var(--p-r-control);
-}
 
 /* City header: light app bar, the seal and name on the left, the language switch on the right, the banig band under it. */
 .permit .p-top { background: var(--p-surface); }
@@ -176,7 +161,6 @@ html:has(.permit) { scroll-padding-block: var(--p-4) 9rem; }
 .permit .p-start { display: grid; gap: var(--p-6); padding-block: var(--p-5) var(--p-7); }
 .permit .p-intro { display: grid; gap: var(--p-4); justify-items: start; max-width: 40rem; }
 .permit .p-intro > * { max-width: 100%; }
-.permit .p-eyebrow { font-size: var(--p-t-sm); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--p-brand); }
 .permit .p-intro h1 { font-size: var(--p-t-3xl); line-height: 1.08; letter-spacing: -0.025em; }
 .permit .p-facts { display: flex; flex-wrap: wrap; gap: var(--p-2); }
 .permit .p-facts li {
@@ -259,7 +243,6 @@ html:has(.permit) { scroll-padding-block: var(--p-4) 9rem; }
 .permit .p-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--p-6); margin-top: var(--p-5); }
 .permit .p-group { display: grid; gap: var(--p-4); }
 .permit .p-group-legend { padding: 0; margin-bottom: var(--p-1); font-size: var(--p-t-lg); font-weight: 600; }
-.permit .p-group > .p-hint { margin-top: calc(-1 * var(--p-3)); }
 .permit .p-field { display: grid; gap: var(--p-2); align-content: start; }
 /* A question in error: a soft error tint with a full 1px border, never a side stripe. */
 .permit .p-field--error { background: var(--p-crit-bg); border: 1px solid var(--p-crit); border-radius: var(--p-r-card); padding: var(--p-3); }
@@ -327,6 +310,11 @@ html:has(.permit) { scroll-padding-block: var(--p-4) 9rem; }
 .permit .p-upload:has(input:focus-visible) { outline: 3px solid var(--p-brand); outline-offset: 2px; }
 .permit .p-field--error .p-upload { border-color: var(--p-crit); }
 .permit .p-upload svg { width: 1.5rem; height: 1.5rem; }
+/* Documents: one panel with a row per document, like the review list, instead of five loose drop boxes. */
+.permit .p-docs { display: grid; padding-block: 0; }
+.permit .p-docs > .p-doc { padding-block: var(--p-4); }
+.permit .p-docs > .p-doc + .p-doc { border-top: 1px solid var(--p-line); }
+.permit .p-docs > .p-field--error { margin-block: var(--p-2); padding: var(--p-3); }
 .permit .p-file {
   display: flex; align-items: center; gap: var(--p-3); padding: var(--p-2);
   background: var(--p-surface); border: 1px solid var(--p-line); border-radius: var(--p-r-control); box-shadow: var(--p-shadow-rest);
@@ -422,6 +410,7 @@ html:has(.permit) { scroll-padding-block: var(--p-4) 9rem; }
 .permit .p-review-doc img { width: 2rem; height: 2rem; object-fit: cover; border-radius: var(--p-r-control); }
 .permit .p-review-doc svg { width: 1.25rem; height: 1.25rem; color: var(--p-muted); }
 .permit .p-missing { color: var(--p-crit); font-weight: 600; }
+.permit .p-review-empty { margin-top: var(--p-2); }
 
 /* ---------- confirmation ---------- */
 .permit .p-done { display: grid; gap: var(--p-6); padding-block: var(--p-5) var(--p-7); }
@@ -490,7 +479,13 @@ html:has(.permit) { scroll-padding-block: var(--p-4) 9rem; }
   .permit .p-wrap { padding-inline: var(--p-6); }
   .permit .p-btn--block-phone { width: auto; }
   .permit .p-panel { padding: var(--p-5); }
-  .permit .p-review { padding-block: 0; }
+  .permit .p-review, .permit .p-docs { padding-block: 0; }
+  /* Each document: what it is on the left, the upload button on the right. A picked file takes the full row. */
+  .permit .p-docs .p-doc { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--p-4); align-items: center; }
+  .permit .p-docs .p-doc > * { grid-column: 1; }
+  .permit .p-docs .p-doc > [aria-live] { grid-column: 2; grid-row: 1 / span 3; }
+  .permit .p-docs .p-doc:has(.p-file) > [aria-live] { grid-column: 1 / -1; grid-row: auto; }
+  .permit .p-docs .p-upload { min-height: 3rem; }
   .permit .p-actions { position: static; margin: 0; padding: 0; background: none; border: 0; box-shadow: none; justify-items: start; gap: var(--p-4); }
   .permit .p-feebar { width: 100%; padding: 0 var(--p-4); background: var(--p-surface); border: 1px solid var(--p-line); border-radius: var(--p-r-card); }
   .permit .p-review dl > div { grid-template-columns: 13rem minmax(0, 1fr); gap: var(--p-4); }
@@ -539,7 +534,7 @@ html:has(.permit) { scroll-padding-block: var(--p-4) 9rem; }
 .permit .p-rail-help a svg { width: 1.125rem; height: 1.125rem; }
 
 @media print {
-  .permit .p-demobar, .permit .p-help, .permit .p-rail, .permit .p-back, .permit .p-done-actions, .permit .p-actions, .permit .p-lang, .permit .p-ticket button { display: none; }
+  .permit .p-help, .permit .p-rail, .permit .p-back, .permit .p-done-actions, .permit .p-actions, .permit .p-lang, .permit .p-ticket button { display: none; }
   .permit { background: none; }
   .permit .p-panel, .permit .p-ticket { box-shadow: none; border-color: var(--p-line-strong); }
 }
