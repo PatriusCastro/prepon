@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Versions follow [Semant
 
 ## [Unreleased]
 
+## [0.2.0-beta.3] - 2026-11-20
+
 ### Added
 - `tweak` mode and `tweak.js`: opens the running app in a visible browser with an editing panel, so a designer can resize buttons and cards (corner grip or values) and change radius, spacing, fonts, and colours live. Each edit applies to only this element, all like it, or the matching `:root` design token. Chips offer the values the page already uses, and target-size, contrast, and tiny-text warnings update as values change. The overlay never edits source: Done writes the change list to `.prepon/tweaks/`, and the skill applies it through tokens and shared components, snapped to the project's scales, with before/after screenshots.
   - States: a Default / Hover / Pressed / Focus / Disabled switch shows the element in that state (hover, pressed, and focus forced through DevTools, disabled by setting the attribute), and edits made there apply only in that state. Focus warns when there's no visible indicator.
