@@ -130,6 +130,7 @@ export const referenceDocs: Record<string, ReactNode> = {
         ['“Why is it like this”, “justify”, “document the design”', <Link to="/docs/cite">cite</Link>],
         ['“Show me examples of”', <Link to="/docs/refs">refs</Link>],
         ['“Explore options”, “show me directions before we code”', <Link to="/docs/canvas">canvas</Link>],
+        ['“Let me edit it in the browser”, “adjust it visually”, “like Figma”', <Link to="/docs/tweak">tweak</Link>],
       ]} />
       <p>When two modes are plausible, Prepon says which one it picked and why in one line, then continues.</p>
       <h2>What each mode reads, edits, and returns</h2>
@@ -140,6 +141,7 @@ export const referenceDocs: Record<string, ReactNode> = {
         ['cite', 'Never', 'UX laws and project types', 'A Markdown table ready to paste'],
         ['refs', 'Never', 'Project types', '3 to 5 real examples with links and what to adapt'],
         ['canvas', 'Only after you pick', 'Project types, slop patterns, accessibility', 'Artboards, then a review of each'],
+        ['tweak', 'After the designer clicks Done', 'Before and after, consistency', 'An in-browser editor, then the edits applied through tokens and components, before/after, change table'],
       ]} />
       <p>References are loaded on demand rather than all at once. Loading everything would dilute attention on the parts that matter for your project.</p>
     </>

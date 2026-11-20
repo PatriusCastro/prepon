@@ -93,6 +93,7 @@ Plugin skills are namespaced, so the full command is `/prepon:prepon`. The bare 
 | `cite <target>` | Explains an existing design: decision, principle, why it applies, and status. Outputs a paste-ready Markdown table. Never edits code. | `/prepon:prepon cite the transfer review screen` |
 | `refs <pattern>` | Finds 3 to 5 real, well-regarded examples with links and what to adapt. Structure only, no copying. | `/prepon:prepon refs multi-step identity verification` |
 | `canvas <brief>` | Writes a design brief, publishes three directions as artboards on a design canvas (or an HTML preview as a fallback), reviews each one, then builds the one you pick. | `/prepon:prepon canvas mobile banking settings screen` |
+| `tweak <url or route>` | Opens your running app with an editing panel so a designer can resize buttons and cards and change radius, spacing, fonts, and colours live, for one element, all like it, or the design token. On Done, applies the edits to the source through your tokens and components, snapped to your scales, with before/after. | `/prepon:prepon tweak http://localhost:5173/settings` |
 
 ### What an audit looks like
 
@@ -141,6 +142,7 @@ All scripts live in `plugins/prepon/skills/prepon/scripts/`, need only Node, and
 | `tap-map.js` | Thumb zones, a blurred squint test, and the predicted order people look at the first screen | Dev server, Playwright |
 | `motion-perf.js` | Dropped and long frames with the CPU slowed 4–6×, animations off the compositor or off screen | Dev server, Playwright (Chromium) |
 | `snapshot.js` | Before/after screenshots at 360, 768, and 1440 px | Dev server, Playwright |
+| `tweak.js` | Not a check: opens a visible browser with the tweak editor and writes the designer's edits to `.prepon/tweaks/<stamp>.json`, with target-size and contrast warnings for each | Dev server, Playwright |
 
 ### The slop detector
 
@@ -179,7 +181,7 @@ node plugins/prepon/skills/prepon/scripts/scan-consistency.js --summary src/
 ## Privacy and side effects
 
 - **What it reads:** your project's source files, configuration, and docs, through Claude Code's normal tools.
-- **What it writes:** UI code (in `build` and `fix`), audit reports to `docs/ui-audit-YYYY-MM-DD.md`, and screenshots, tap maps, and canvas fallbacks to `.prepon/` in your project (or to a folder you choose with `--out`). It checks that `.prepon/` is in `.gitignore` before writing there, because screenshots of client screens don't belong in version control. `audit`, `cite`, and `refs` never edit code.
+- **What it writes:** UI code (in `build`, `fix`, and `tweak`), audit reports to `docs/ui-audit-YYYY-MM-DD.md`, and screenshots, tap maps, tweak change lists, and canvas fallbacks to `.prepon/` in your project (or to a folder you choose with `--out`). It checks that `.prepon/` is in `.gitignore` before writing there, because screenshots of client screens don't belong in version control. `audit`, `cite`, and `refs` never edit code.
 - **What leaves your machine, beyond the conversation itself:**
   - **Artifacts.** Audit report pages, before/after comparisons (with their screenshots), and canvas directions are published as claude.ai Artifacts, which are private to you until you share them. Without Artifacts, they stay as local files.
   - **Web search** in `refs` mode, for the UI pattern you name.
@@ -220,8 +222,8 @@ The docs and showcase site lives in `site/` (Vite + React): `npm install --prefi
 plugins/prepon/.claude-plugin/       plugin.json (manifest and settings) and icon.png
 plugins/prepon/skills/prepon/
   SKILL.md                           router and core workflow
-  references/                        ux-laws, ux-writing, slop-patterns, hierarchy, visual-craft, consistency, icons, motion, responsive, mobile, accessibility, project-types, modes, before-after
-  scripts/                           detect-slop, scan-consistency, check-page, tap-map, motion-perf, snapshot, hook-slop
+  references/                        ux-laws, ux-writing, slop-patterns, hierarchy, visual-craft, consistency, icons, motion, responsive, mobile, accessibility, project-types, modes, tweak, before-after
+  scripts/                           detect-slop, scan-consistency, check-page, tap-map, motion-perf, snapshot, tweak, hook-slop
 plugins/prepon/hooks/hooks.json      wires the optional hook
 test/                                self-tests for the scripts (not shipped in the plugin)
 site/                                docs and showcase site

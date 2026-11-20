@@ -121,4 +121,4 @@ async function main() {
 if (require.main === module) {
   main().then((code) => { process.exitCode = code; }, (e) => { process.stderr.write(String(e.stack || e) + '\n'); process.exitCode = 1; });
 }
-module.exports = { resolveRoute };
+module.exports = { resolveRoute, args, loadPlaywright, ensureGitignored };

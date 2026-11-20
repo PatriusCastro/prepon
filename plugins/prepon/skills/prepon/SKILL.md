@@ -1,8 +1,8 @@
 ---
 name: prepon
-description: Frontend design and UI review that fits the specific project and its users. Use whenever building, changing, or reviewing any user interface, even if the request never says "design" or "UX". That includes screens, pages, components, layouts, forms, multi-step flows, dashboards, tables, navigation, icons, motion and animation (including janky or laggy animation on slow or low-end phones), pagination, visual hierarchy, what users see or tap first on a phone, cluttered or empty-feeling screens, too many cards, mobile screens (React Native), responsiveness, accessibility, contrast, touch targets, design audits, inconsistent UI (mismatched borders, border radius, button colors or behavior, spacing, wording), explaining or justifying a design to a client, finding reference designs, exploring visual directions on a canvas, and complaints such as "this looks generic", "looks AI-made", "looks outdated", "not modern", "make it look better", or "clean this up".
-when_to_use: Modes are build, audit, fix, cite, refs, and canvas. Pass the mode as the first argument, or let it be inferred from the request.
-argument-hint: "[build|audit|fix|cite|refs|canvas] [target, pattern, or brief]"
+description: Frontend design and UI review that fits the specific project and its users. Use whenever building, changing, or reviewing any user interface, even if the request never says "design" or "UX". That includes screens, pages, components, layouts, forms, multi-step flows, dashboards, tables, navigation, icons, motion and animation (including janky or laggy animation on slow or low-end phones), pagination, visual hierarchy, what users see or tap first on a phone, cluttered or empty-feeling screens, too many cards, mobile screens (React Native), responsiveness, accessibility, contrast, touch targets, design audits, inconsistent UI (mismatched borders, border radius, button colors or behavior, spacing, wording), explaining or justifying a design to a client, finding reference designs, exploring visual directions on a canvas, letting a designer edit the running app in the browser like a design tool (resize buttons and cards, change radius, spacing, fonts, colours) and applying those edits to the code, and complaints such as "this looks generic", "looks AI-made", "looks outdated", "not modern", "make it look better", or "clean this up".
+when_to_use: Modes are build, audit, fix, cite, refs, canvas, and tweak. Pass the mode as the first argument, or let it be inferred from the request.
+argument-hint: "[build|audit|fix|cite|refs|canvas|tweak] [target, pattern, brief, or URL]"
 allowed-tools: Bash(node ${CLAUDE_SKILL_DIR}/scripts/*)
 ---
 
@@ -16,7 +16,7 @@ Generic output is almost always the result of designing without context. Most of
 
 The request is: `$ARGUMENTS`
 
-If the first word is a mode name, use it. Otherwise infer it: making or changing UI is **build**, "review / check / what's wrong with" is **audit**, "apply the fixes" after an audit is **fix**, "why is it like this / justify / document the design" is **cite**, "show me examples of" is **refs**, and "explore options / show me directions before we code" is **canvas**. If two modes are plausible, say which one you picked and why in one line, then continue.
+If the first word is a mode name, use it. Otherwise infer it: making or changing UI is **build**, "review / check / what's wrong with" is **audit**, "apply the fixes" after an audit is **fix**, "why is it like this / justify / document the design" is **cite**, "show me examples of" is **refs**, and "explore options / show me directions before we code" is **canvas**, and "let me edit it in the browser / adjust it visually / like Figma" on the running app is **tweak**. If two modes are plausible, say which one you picked and why in one line, then continue.
 
 | Mode | Edits code? | Read before starting | Output |
 |---|---|---|---|
@@ -26,6 +26,7 @@ If the first word is a mode name, use it. Otherwise infer it: making or changing
 | cite `<target>` | never | modes.md#cite, ux-laws.md, project-types.md | Markdown table ready to paste into client documentation |
 | refs `<pattern>` | never | modes.md#refs, project-types.md | 3 to 5 real examples with links and what to adapt |
 | canvas `<brief>` | not until a direction is picked | modes.md#canvas, project-types.md, hierarchy.md, visual-craft.md, slop-patterns.md, accessibility.md, plus mobile.md or responsive.md | design artifact with artboards, then a review of each |
+| tweak `<url or route>` | yes, after the designer clicks Done | tweak.md, before-after.md, consistency.md | an in-browser editor for the designer, then their edits applied through tokens and components, before/after, change table |
 
 All reference files live in `${CLAUDE_SKILL_DIR}/references/`. Read them on demand, not all at once. Loading everything dilutes attention on the parts that matter for this project.
 
@@ -115,7 +116,7 @@ Cite a principle only when it actually drove the decision. The value of a ration
 
 ## Mode details
 
-audit, fix, cite, refs, and canvas each have a section in `${CLAUDE_SKILL_DIR}/references/modes.md`. Read the relevant section before starting that mode. It holds the output formats, the audit scoring rubric, and the canvas flow, including how to publish a design canvas or fall back to an HTML preview.
+audit, fix, cite, refs, and canvas each have a section in `${CLAUDE_SKILL_DIR}/references/modes.md`. Read the relevant section before starting that mode. It holds the output formats, the audit scoring rubric, and the canvas flow, including how to publish a design canvas or fall back to an HTML preview. tweak has its own file, `${CLAUDE_SKILL_DIR}/references/tweak.md`, so a tweak session doesn't load the other modes.
 
 ## Platform notes
 

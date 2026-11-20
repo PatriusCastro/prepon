@@ -1,0 +1,32 @@
+# tweak
+
+Assumes project context is established as described in SKILL.md.
+
+A designer edits the running app directly in the browser, the way they would in a design tool: resize buttons and cards, change radius, spacing, fonts, and colours, and see the result live. The overlay only previews. It never edits source files. When the designer clicks Done, it hands you a change list, and you apply it to the source the same way build would: through tokens and shared components, mobile-first. Web only. For React Native, use Expo web if the project has it, or say tweak isn't available.
+
+1. **Context:** establish it exactly as build does, including the `scan-consistency.js` summary. You'll need the project's real scales when you apply the edits.
+2. **Dev server:** find the URL as described in before-after.md (steps 2 and 3, including the Playwright check). If the user named a route, open that one.
+3. **Capture the before state** of that route (before-after.md). The source doesn't change while the designer works, so capture it now.
+4. **Open the editor.** Run it **in the background**, because it waits for the designer:
+   ```
+   node <scripts>/tweak.js --url http://localhost:5173/settings
+   ```
+   Add `--storage-state <file>` for routes behind a login, or `--out <dir>` to keep the change list out of the project. Then tell the user, in a few lines:
+   - Click any element to select it. The breadcrumb at the top of the panel climbs to its parents, for example from a label to its card. The toolbar at the bottom has the pointer (turn it off to use the app normally, for example to open a menu or move to another page; edits on other pages are kept), undo (also Ctrl+Z), reset all, and buttons to hide the panel or move it to the other side.
+   - Edit values in the panel: type, drag a field's label sideways, or use the arrow keys (Shift for steps of 10). Click a chip to use a value the page already uses, or drag the corner square on the selection to resize.
+   - *Edits apply to* sets the scope for the selected element's edits: *This one*, *All like it* (same element and classes), or *Token* (a `:root` variable with the same value, so everything using it changes).
+   - *State* shows the element as Hover, Pressed, Focus, or Disabled, so its state styles can be seen and edited. Edits made there apply only in that state.
+   - Radius, Border, Padding, Margin, and Gap have a split button to edit each corner or side on its own. Shadow is edited as X, Y, Blur, Spread, and Colour.
+   - Click **Done** in the toolbar when finished. Closing the window also works, and keeps every edit.
+5. **Read the change list** when the script exits. It prints `{ file, status, changes, warnings }`. The file has one entry per edit: `property`, `from`, `to`, `state`, `scope`, `token`, `matches`, `url`, `warnings`, and `element` (`selector`, `tag`, `classes`, `text`, `component`, `source`). If `changes` is 0, say so and stop.
+6. **Find each edit in source.** Use `element.source` (`file:line`, from React's dev build up to React 18) when present. Otherwise search for `element.component`, the classes, and the text. For `scope: "token"`, confirm the element really uses that token: the overlay matched it by value only, so it's a likely match, not a certain one. If you can't place an edit with confidence, list it and ask rather than guess.
+7. **Apply each edit at its scope, the way the project is built:**
+   - **token:** change the token's value where it's defined (CSS variables, Tailwind theme, theme file). If the token is used for something the designer didn't mean to change, say so and ask.
+   - **all like it:** change the shared component or the variant, never each instance. If the matches came from a copied class string rather than a component, edit every copy and mention that a component would stop the drift.
+   - **only this one:** a one-off on that instance. If the same value matches an existing token or scale step, use that instead of the raw value.
+   - **Translate, don't transcribe.** The overlay records raw pixels. Snap each value to the nearest step of the project's scale (spacing, radius, type) and use the token name. If the designer clearly went between steps on purpose, ask whether to add a step. A resize of a button or control (`width` and `height`) becomes padding and `min-height`, not a fixed width. A resized card or container becomes padding, gap, or `max-width`. Fixed sizes break at 360 px. A new `font-family` must be loaded: add it the way the project loads fonts, and check its licence and weights.
+   - **States:** an edit with `state` other than `default` goes in that state's style, the way the project writes states: Tailwind `hover:`, `active:`, `focus-visible:`, `disabled:` (or `aria-disabled:`), a CSS `:hover` / `:active` / `:focus-visible` / `:disabled` rule, or the component library's state props. For "all like it", change the variant's state so every button of that variant behaves the same (consistency.md). A focus edit must keep a visible indicator (accessibility.md); never remove it.
+   - **Sides and corners:** a longhand such as `border-top-left-radius`, `padding-left`, or `border-bottom-width` stays a longhand in source (`rounded-tl-*`, `pl-*`, `border-b-*`), snapped to the scale like any other value. If all four sides end up equal, write the shorthand. In right-to-left projects, use the logical form (`ps-*`, `rounded-s-*`) when the project already does. A `border-*-style: solid` that came with a width edit is the overlay making the line visible; write it only if the project doesn't already set a style.
+   - **Warnings** (target size, contrast, tiny text, missing focus indicator) were measured at the edited value and state. Don't apply a change that fails WCAG AA silently: apply the nearest value that passes, and say what you changed, or ask.
+8. **Re-check:** run the slop detector and `scan-consistency.js --summary` on the changed files. An edit that adds a new outlier (a fifth radius) gets snapped or raised with the user. Then capture the after state and publish the comparison (before-after.md).
+9. **Reply** with the change summary table (What changed / Before / After / Principle or reason), one row per applied edit, noting where you snapped, translated, or declined a value, and the comparison link. Use "Designer's edit in tweak" as the reason unless a principle also drove it. Delete the change list file once it's applied, unless the user wants to keep it.

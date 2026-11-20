@@ -17,6 +17,8 @@ export const DOCS: Doc[] = [
     summary: 'Finds 3 to 5 real, well-regarded examples of a pattern, with verified links and notes on what to adapt. Structure only, no copying.' },
   { group: 'Modes', slug: 'canvas', nav: 'canvas', title: 'canvas mode', source: `${SKILL}/references/modes.md`,
     summary: 'Explores three visual directions on a design canvas before any code changes, reviews each one, then builds the one you pick.' },
+  { group: 'Modes', slug: 'tweak', nav: 'tweak', title: 'tweak mode', source: `${SKILL}/references/tweak.md`,
+    summary: 'Lets a designer edit the running app in the browser, resizing and restyling elements live, then applies those edits to the code through tokens and components.' },
   { group: 'Reference', slug: 'choosing-a-mode', nav: 'Choosing a mode', title: 'Choosing a mode', source: `${SKILL}/SKILL.md`,
     summary: 'How Prepon picks a mode from your request, and what each mode reads, edits, and returns.' },
   { group: 'Reference', slug: 'project-types', nav: 'Project types', title: 'Project types', source: `${SKILL}/references/project-types.md`,
