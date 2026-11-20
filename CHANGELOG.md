@@ -4,6 +4,18 @@ All notable changes to this project are documented here. Versions follow [Semant
 
 ## [Unreleased]
 
+## [0.2.0-beta.3] - 2026-11-20
+
+### Added
+- `tweak` mode and `tweak.js`: opens the running app in a visible browser with an editing panel, so a designer can resize buttons and cards (corner grip or values) and change radius, spacing, fonts, and colours live. Each edit applies to only this element, all like it, or the matching `:root` design token. Chips offer the values the page already uses, and target-size, contrast, and tiny-text warnings update as values change. The overlay never edits source: Done writes the change list to `.prepon/tweaks/`, and the skill applies it through tokens and shared components, snapped to the project's scales, with before/after screenshots.
+  - States: a Default / Hover / Pressed / Focus / Disabled switch shows the element in that state (hover, pressed, and focus forced through DevTools, disabled by setting the attribute), and edits made there apply only in that state. Focus warns when there's no visible indicator.
+  - Per-side and per-corner editing for radius, border width, padding, margin, and gap; shadow edited as X, Y, blur, spread, and colour; an Effects group (opacity, transition, transform, outline, cursor). A border or outline width with no style becomes solid so it shows.
+  - A floating bottom toolbar (select, undo, reset all, show or hide the panel, move it, Done), collapsible property groups, label scrubbing, a breadcrumb to parents, and a name and size tag on the selection.
+  - Instructions live in `references/tweak.md`, so a tweak session doesn't load the other modes' instructions.
+
+### Changed
+- `snapshot.js` exports its argument parsing, Playwright loading, and `.gitignore` helpers for `tweak.js` to reuse.
+
 ## [0.2.0-beta.2] - 2026-11-19
 
 ### Added

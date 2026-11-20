@@ -117,7 +117,7 @@ export function Home() {
           <div className="section-head">
             <h2 id="install-h">Use it on your next screen</h2>
             <p>Needs a recent Claude Code (tested on 2.1.322) and Node.js 18 or later for the bundled scripts. While the repository is private, your git credentials need read access to it.</p>
-            <p>Then run <code>/prepon:prepon</code> with a request. It picks one of six modes from what you ask: {(['build', 'audit', 'fix', 'cite', 'refs', 'canvas'] as const).map((m, n) => <span key={m}>{n ? (n === 5 ? ', or ' : ', ') : ''}<Link to={`/docs/${m}`}><code>{m}</code></Link></span>)}. Audit, cite, and refs never edit code.</p>
+            <p>Then run <code>/prepon:prepon</code> with a request. It picks one of seven modes from what you ask: {(['build', 'audit', 'fix', 'cite', 'refs', 'canvas', 'tweak'] as const).map((m, n) => <span key={m}>{n ? (n === 6 ? ', or ' : ', ') : ''}<Link to={`/docs/${m}`}><code>{m}</code></Link></span>)}. Audit, cite, and refs never edit code.</p>
           </div>
           <div className="install">
             <CodeBlock label="Install in Claude Code" code={INSTALL} primary />

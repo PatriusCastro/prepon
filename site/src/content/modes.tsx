@@ -196,4 +196,30 @@ export const modeDocs: Record<string, ReactNode> = {
       ]} />
     </>
   ),
+
+  tweak: (
+    <>
+      <Example code="/prepon:prepon tweak http://localhost:5173/settings" />
+      <p>Tweak opens your running app in a browser window with an editing panel, so a designer can adjust it the way they would in a design tool and see the result live. The panel only previews. When the designer clicks Done, Prepon applies the edits to your code.</p>
+      <h2>What the designer can do</h2>
+      <ul>
+        <li><strong>Select</strong> any element by clicking it. The breadcrumb climbs to its parents. Turning off the pointer in the bottom toolbar lets you use the app normally, to open a menu or move to another page. The toolbar also has undo (Ctrl+Z), reset all, and buttons to hide or move the panel.</li>
+        <li><strong>Resize</strong> with the corner square, or edit width, height, padding, and gap.</li>
+        <li><strong>Restyle</strong> radius, border, shadow, font family, size, weight, line height, letter spacing, and colours. Drag a field’s label sideways to scrub its value, as in Figma, or use the arrow keys; chips offer the values the page already uses.</li>
+        <li><strong>Choose the scope</strong> of each element’s edits: only this one, all like it, or its design token, so one change can update every button that shares it.</li>
+        <li><strong>See warnings</strong> as values change: targets under 24 or 44 px, text contrast under AA, and text under 12 px.</li>
+      </ul>
+      <h2>How the edits reach your code</h2>
+      <ol>
+        <li><strong>Before state</strong> captured first, as in <Link to="/docs/before-after">before and after</Link>.</li>
+        <li><strong>Find each edit</strong> in source, from the React source location when the dev build provides it, or the component name, classes, and text.</li>
+        <li><strong>Apply it at its scope:</strong> the token’s definition, the shared component or variant, or the one instance.</li>
+        <li><strong>Translate, don’t transcribe.</strong> Pixel values snap to your spacing, radius, and type scales. A resized button becomes padding and a minimum height, not a fixed width, so it still works at 360 px. A new font gets loaded the way your project loads fonts.</li>
+        <li><strong>No silent accessibility regressions.</strong> An edit that fails WCAG AA is applied at the nearest passing value, with a note, or Prepon asks.</li>
+        <li><strong>After state,</strong> slop and consistency scans, and a change table that says where a value was snapped or translated.</li>
+      </ol>
+      <h2>Limits</h2>
+      <p>Web only (Expo web works for React Native projects). No free x/y positioning or adding elements: positions in a flex or grid layout come from the layout, and an absolute position would break on other screen sizes. Needs Playwright in your project, the same as the screenshots.</p>
+    </>
+  ),
 };
